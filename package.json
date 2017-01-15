@@ -1,0 +1,23 @@
+{
+  "name": "misaka-oneesama",
+  "display_name": "御坂ーお姉さま",
+  "version": "0.0.1",
+  "revision": "1",
+  "description": "Plugin-based Discord Bot with Desktop and Web UI for configuration",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "node_modules/.bin/electron ."
+  },
+  "dependencies": {
+    "electron": ">=1.4.*",
+    "electron-localshortcut": "^1.0.0",
+    "express": "^4.*",
+    "discord.js": "^11.*",
+    "rootpath": "*"
+  },
+  "devDependencies": {
+    "electron-packager": "^8.*",
+    "electron-prebuilt": ">=1.4.*"
+  }
+}

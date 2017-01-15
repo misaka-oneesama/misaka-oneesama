@@ -1,0 +1,5 @@
+# Generic ignore patterns
+node_modules/
+
+# App ignore patterns
+config.js
