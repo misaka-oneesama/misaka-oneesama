@@ -29,12 +29,12 @@ All Qt supported platforms should be supported. Originally this is a personal bo
 
 #### TODO list
 
- -[ ] Implement Bot Core
- -[ ] Implement basic HTTP server
-   -[ ] Implement basic Web UI
-     -[ ] Implement actual Web UI with functionality
- -[ ] Implement Plugin API
- -[ ] Implement some plugins
-   -[ ] Chat commands with simple text responses
-   -[ ] Server Info, User Info, Role Info, ...
+ - [ ] Implement Bot Core
+ - [ ] Implement basic HTTP server
+   - [ ] Implement basic Web UI
+     - [ ] Implement actual Web UI with functionality
+ - [ ] Implement Plugin API
+ - [ ] Implement some plugins
+   - [ ] Chat commands with simple text responses
+   - [ ] Server Info, User Info, Role Info, ...
 
