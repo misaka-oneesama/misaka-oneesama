@@ -2,5 +2,5 @@
 
 node {
   def workspace = pwd() 
-  sh "${workspace}@script/.jenkinsbuild.sh"
+  sh "${workspace}@script/jenkinsbuild.sh"
 }
