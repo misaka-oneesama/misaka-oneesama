@@ -5,7 +5,7 @@
 
 Discord Bot with Web UI and Plugin support
 
-![](...)
+[![FreeBSD Build Status](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/badge/icon)](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/)
 <br><br><br>
 
 #### Overview
