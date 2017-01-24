@@ -6,6 +6,8 @@ cd "$(dirname "$(realpath "$0")")"
 
 ### Setup environment
 
+export QMAKESPEC=/usr/local/lib/qt5/mkspecs/freebsd-clang
+
 # Make sure that there are no old builds
 [ -d build ] && rm -rf build
 
