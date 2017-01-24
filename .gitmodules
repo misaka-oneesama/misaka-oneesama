@@ -1,0 +1,3 @@
+[submodule "External/QDiscord"]
+	path = External/QDiscord
+	url = https://github.com/george99g/QDiscord.git
