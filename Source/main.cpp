@@ -1,5 +1,7 @@
 #include <QCoreApplication>
 
+#include <iostream>
+
 #include "httplistener.h"
 #include "templatecache.h"
 #include "httpsessionstore.h"
@@ -26,6 +28,7 @@ int main(int argc, char** argv)
 
     // Initialize configuration
     configManager = new ConfigManager();
+    configManager->loadConfig();
 
     // Initialize debugger
     debugger = new Debugger();

@@ -31,6 +31,7 @@ Debugger::~Debugger()
     {
         this->m_logFile->close();
         delete this->m_logFile;
+        this->m_logFile = nullptr;
     }
 
     this->m_logStream.setDevice(0);
@@ -106,6 +107,7 @@ void Debugger::setEnabled(bool enabled)
 
             this->m_logFile->close();
             delete this->m_logFile;
+            this->m_logFile = nullptr;
 
             std::cerr << "Debugger: unable to create log file" << std::endl;
         }
