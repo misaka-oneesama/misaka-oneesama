@@ -17,15 +17,31 @@ Misaka-oneesama is an upcoming bot for Discord™ with a Web-based configuration
 I plan to develop some plugins by myself to use with the bot.
 
 
+#### Requirements
+
+This are the requirements and dependencies which are required to build and operate the bot. Those may be subject to change during development.
+
+ - UTF-8 compatible system environment (**important!**)
+ - C++14 compiler
+ - Any Qt supported Operating System (Linux, \*BSD, macOS, Windows, etc.)
+
+ - [Qt](https://www.qt.io) 5.6+ (lower versions may work too, but not recommended)
+   - Qt Core
+   - Qt Network ─ for the HTTP server which operates the Web UI
+   - Qt WebSockets ─ for the Discord API communication
+
+
 #### Things used to build this bot
 
  - [Qt](https://www.qt.io)
  - [QDiscord](https://github.com/george99g/QDiscord) ─ Qt C++ Discord API wrapper by [george99g](https://github.com/george99g)
  - [QtWebApp](http://stefanfrings.de/qtwebapp/index-en.html) ─ Qt C++ HTTP Server by [Stefan Frings](http://stefanfrings.de)
 
+
 #### Support Platforms
 
 All Qt supported platforms should be supported. Originally this is a personal bot and it needs to work mainly on FreeBSD only, which is the OS of my choice for servers.
+
 
 #### TODO list
 
