@@ -3,7 +3,7 @@
 # 御坂ーお姉さま
 <sup>*Misaka-oneesama*</sup>
 
-Discord Bot with Web UI and Plugin support
+Discord Bot with Web UI and Plugin support written in C++14
 
 **FreeBSD** [![FreeBSD Build Status](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/badge/icon)](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/) [![Discord Server](https://discordapp.com/api/guilds/238054360637112321/embed.png)](https://discord.gg/4dpCQXv)
 <br><br><br>

@@ -32,7 +32,10 @@ public:
     /// CONFIGURABLE OPTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    //
+    void setJoinedGuilds(const QList<quint64> &guildIds);
+    void addJoinedGuild(const quint64 &guildId);
+    void removeJoinedGuild(const quint64 &guildId);
+    const QList<quint64> &joinedGuilds() const;
 
 private:
     bool m_valid = false;
@@ -51,7 +54,7 @@ private:
     void p_resetStream(bool force = false);
 
     // CONFIGURABLE OPTIONS
-
+    QList<quint64> m_cfgJoinedGuilds;
 };
 
 #endif // CONFIGMANAGER_HPP

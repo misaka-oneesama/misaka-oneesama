@@ -29,6 +29,15 @@ ConfigManager::ConfigManager()
     this->m_cfgHeader = QLatin1String("misaka-cfg");
 
     // set expected config file version
+    // TODO:
+    //   check this value during reading and update the settings file and reload it
+    //   to prevent corrupting or losing the configuration. during some tests the file
+    //   was resized to 0 during reading.
+    //   also add a note that this value needs to be raised everytime the signature
+    //   or the stream changes by either adding new values or removing existing ones.
+    // NOTE:
+    //   if this causes too much problems in the future port the configuration system
+    //   to a JSON or INI file.
     this->m_cfgVersion = 0x00000100;
 }
 
@@ -66,6 +75,8 @@ void ConfigManager::loadConfig()
             }
 
             this->m_configStream >> this->m_cfgVersion;
+
+            this->m_configStream >> this->m_cfgJoinedGuilds;
         }
 
         else
@@ -107,6 +118,8 @@ void ConfigManager::saveConfig()
         this->m_configStream << this->m_cfgHeader;
         this->m_configStream << this->m_cfgVersion;
 
+        this->m_configStream << this->m_cfgJoinedGuilds;
+
         this->m_configFile->flush();
     }
 
@@ -122,6 +135,31 @@ void ConfigManager::saveConfig()
 const QString &ConfigManager::configPath() const
 {
     return this->m_configPath;
+}
+
+void ConfigManager::setJoinedGuilds(const QList<quint64> &guildIds)
+{
+    this->m_cfgJoinedGuilds = guildIds;
+}
+
+void ConfigManager::addJoinedGuild(const quint64 &guildId)
+{
+    if (!this->m_cfgJoinedGuilds.contains(guildId))
+    {
+        this->m_cfgJoinedGuilds.append(guildId);
+    }
+}
+
+void ConfigManager::removeJoinedGuild(const quint64 &guildId)
+{
+    // there should be only one occurrence of guildId in the list
+    // threrefore `removeOne` is faster than `removeAll`
+    this->m_cfgJoinedGuilds.removeOne(guildId);
+}
+
+const QList<quint64> &ConfigManager::joinedGuilds() const
+{
+    return this->m_cfgJoinedGuilds;
 }
 
 void ConfigManager::p_resetStream(bool force)

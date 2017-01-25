@@ -1,22 +1,8 @@
 #include <QCoreApplication>
-
+#include <QDebug>
 #include <iostream>
 
-#include "httplistener.h"
-#include "templatecache.h"
-#include "httpsessionstore.h"
-#include "staticfilecontroller.h"
-#include "filelogger.h"
-//#include "requestmapper.h"
-
 #include <Source/global.hpp>
-
-using namespace stefanfrings;
-
-TemplateCache *templateCache = nullptr;
-HttpSessionStore *sessionStore = nullptr;
-StaticFileController *staticFileController = nullptr;
-FileLogger *logger = nullptr;
 
 int main(int argc, char** argv)
 {
