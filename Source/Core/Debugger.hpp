@@ -16,7 +16,7 @@ public:
 
     bool setLogDir(const QString &logDir);
     void setEnabled(bool);
-    void setMaxLogFilesToKeep(int);
+    void setMaxLogFilesToKeep(quint16);
 
     void notice(const QString&);
     void warning(const QString&);
@@ -29,7 +29,7 @@ private:
 
     bool m_valid = false;
     bool m_enabled = false;
-    int m_maxLogFiles = 5;
+    quint16 m_maxLogFiles = 5;
 };
 
 #endif // DEBUGGER_HPP

@@ -39,6 +39,9 @@ ConfigManager::ConfigManager()
     //   if this causes too much problems in the future port the configuration system
     //   to a JSON or INI file.
     this->m_cfgVersion = 0x00000100;
+
+    // initialize default configuration
+    this->resetConfig();
 }
 
 ConfigManager::~ConfigManager()
@@ -76,6 +79,7 @@ void ConfigManager::loadConfig()
 
             this->m_configStream >> this->m_cfgVersion;
 
+            this->m_configStream >> this->m_cfgMaxLogFilesToKeep;
             this->m_configStream >> this->m_cfgJoinedGuilds;
         }
 
@@ -99,6 +103,9 @@ void ConfigManager::resetConfig()
 {
     this->m_cfgHeader = QLatin1String("misaka-cfg");
     this->m_cfgVersion = 0x00000100;
+
+    this->m_cfgMaxLogFilesToKeep = 5;
+    this->m_cfgJoinedGuilds.clear();
 }
 
 void ConfigManager::saveConfig()
@@ -118,6 +125,7 @@ void ConfigManager::saveConfig()
         this->m_configStream << this->m_cfgHeader;
         this->m_configStream << this->m_cfgVersion;
 
+        this->m_configStream << this->m_cfgMaxLogFilesToKeep;
         this->m_configStream << this->m_cfgJoinedGuilds;
 
         this->m_configFile->flush();
@@ -135,6 +143,16 @@ void ConfigManager::saveConfig()
 const QString &ConfigManager::configPath() const
 {
     return this->m_configPath;
+}
+
+void ConfigManager::setMaxLogFilesToKeep(quint16 max)
+{
+    this->m_cfgMaxLogFilesToKeep = max;
+}
+
+quint16 ConfigManager::maxLogFilesToKeep() const
+{
+    return this->m_cfgMaxLogFilesToKeep;
 }
 
 void ConfigManager::setJoinedGuilds(const QList<quint64> &guildIds)

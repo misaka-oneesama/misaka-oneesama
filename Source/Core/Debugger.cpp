@@ -114,7 +114,7 @@ void Debugger::setEnabled(bool enabled)
     }
 }
 
-void Debugger::setMaxLogFilesToKeep(int c)
+void Debugger::setMaxLogFilesToKeep(quint16 c)
 {
     this->m_maxLogFiles = c;
 }

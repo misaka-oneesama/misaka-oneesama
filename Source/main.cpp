@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 
     // Initialize debugger
     debugger = new Debugger();
-    debugger->setMaxLogFilesToKeep(5); // todo: make use configurable
+    debugger->setMaxLogFilesToKeep(configManager->maxLogFilesToKeep());
     debugger->setLogDir(configManager->configPath() + "/logs");
     debugger->setEnabled(true);
 

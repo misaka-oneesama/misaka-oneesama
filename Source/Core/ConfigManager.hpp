@@ -32,6 +32,9 @@ public:
     /// CONFIGURABLE OPTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    void setMaxLogFilesToKeep(quint16);
+    quint16 maxLogFilesToKeep() const;
+
     void setJoinedGuilds(const QList<quint64> &guildIds);
     void addJoinedGuild(const quint64 &guildId);
     void removeJoinedGuild(const quint64 &guildId);
@@ -54,6 +57,7 @@ private:
     void p_resetStream(bool force = false);
 
     // CONFIGURABLE OPTIONS
+    quint16 m_cfgMaxLogFilesToKeep = 0;
     QList<quint64> m_cfgJoinedGuilds;
 };
 
