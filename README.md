@@ -47,8 +47,10 @@ All Qt supported platforms should be supported. Originally this is a personal bo
 ## TODO list
 
  - [ ] Implement Bot Core
+   - [x] Discord login and WebSocket communication
+   - [ ] Implement a event handler for all the different Discord events
  - [ ] Implement a solid multithreaded environment **[QThread and Signal/Slots]**
-   - [ ] Handle UNIX signals (use C preprocessor to exclude Windows)
+   - [x] Handle UNIX signals (use C preprocessor to exclude Windows)
  - [ ] Implement basic HTTP server
    - [ ] Implement basic Web UI
      - [ ] Implement actual Web UI with functionality
