@@ -1,6 +1,14 @@
 #include "Server.hpp"
 
+#include <QSettings>
+
+// QtWebApp
+#include "httplistener.h"
+
+using namespace stefanfrings;
+
 #include <Source/Global.hpp>
+#include "RequestMapper.hpp"
 
 Server::Server(QObject *parent)
     : QObject(parent)
@@ -13,8 +21,6 @@ Server::Server(const QLatin1String &listeningAddress, quint16 listeningPort, QOb
 {
     this->m_listeningAddress = listeningAddress;
     this->m_listeningPort = listeningPort;
-
-    //this->m_configured = true;
 }
 
 Server::~Server()
@@ -70,7 +76,31 @@ void Server::start()
 
 void Server::p_startPrivate()
 {
+    // FIXME: improve this asap
+    // also find a workaround to make QSettings **NOT** to store its settings to disk
+    // if there is no workaround make changes upstream in QtWebApp and port it away from QSettings
+    // i'd like to avoid that though
+
     debugger->notice("Server: starting up...");
+
+    QSettings *settings = new QSettings(this);
+    settings->setValue("host", this->m_listeningAddress);
+    settings->setValue("port", this->m_listeningPort);
+
+    settings->setValue("minThreads", 4);
+    settings->setValue("maxThreads", 100);
+    settings->setValue("cleanupInterval", 60000);
+    settings->setValue("readTimeout", 60000);
+    settings->setValue("maxRequestSize", 16000);
+    settings->setValue("maxMultiPartSize", 10000000);
+
+    // note about settings
+    // all settings are used, except this 2
+    //  - sslKeyFile
+    //  - sslCertFile
+    // we don't need that, we recommend to setup a reverse proxy on a more professional web server app
+
+    new HttpListener(settings, new RequestMapper(this), this);
 }
 
 void Server::stop()

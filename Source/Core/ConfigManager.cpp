@@ -80,6 +80,7 @@ void ConfigManager::loadConfig()
             this->m_configStream >> this->m_cfgVersion;
 
             this->m_configStream >> this->m_cfgMaxLogFilesToKeep;
+            this->m_configStream >> this->m_cfgDebuggerPrintToTerminal;
             this->m_configStream >> this->m_cfgOAuthToken;
             this->m_configStream >> this->m_cfgJoinedGuilds;
         }
@@ -106,6 +107,11 @@ void ConfigManager::resetConfig()
     this->m_cfgVersion = 0x00000100;
 
     this->m_cfgMaxLogFilesToKeep = 5;
+#ifdef QT_DEBUG
+    this->m_cfgDebuggerPrintToTerminal = true;
+#else
+    this->m_cfgDebuggerPrintToTerminal = false;
+#endif
     this->m_cfgJoinedGuilds.clear();
 }
 
@@ -127,6 +133,7 @@ void ConfigManager::saveConfig()
         this->m_configStream << this->m_cfgVersion;
 
         this->m_configStream << this->m_cfgMaxLogFilesToKeep;
+        this->m_configStream << this->m_cfgDebuggerPrintToTerminal;
         this->m_configStream << this->m_cfgOAuthToken;
         this->m_configStream << this->m_cfgJoinedGuilds;
 
@@ -155,6 +162,16 @@ void ConfigManager::setMaxLogFilesToKeep(quint16 max)
 quint16 ConfigManager::maxLogFilesToKeep() const
 {
     return this->m_cfgMaxLogFilesToKeep;
+}
+
+void ConfigManager::setDebuggerPrintToTerminal(bool enabled)
+{
+    this->m_cfgDebuggerPrintToTerminal = enabled;
+}
+
+bool ConfigManager::debuggerPrintToTerminal() const
+{
+    return this->m_cfgDebuggerPrintToTerminal;
 }
 
 void ConfigManager::setOAuthToken(const QString &token)

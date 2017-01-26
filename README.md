@@ -44,6 +44,15 @@ This are the requirements and dependencies which are required to build and opera
 All Qt supported platforms should be supported. Originally this is a personal bot and it needs to work mainly on FreeBSD only, which is the OS of my choice for servers. If there are any issues on the OS of your choice feel free to fix it yourself and make a *pull request* or open an issue and let me know.
 
 
+## Testing
+
+After running the bot, its Web UI can be accessed using [http://127.0.0.1:4555/](http://127.0.0.1:4555/) (default configuration). There are multiple threads and the bot is capable of handling requests and responses from both, HTTP and Discord™ WebSockets.
+
+At the moment there isn't anything interesting served over HTTP. Just some string saying `It's working :D` or a 404 error message on any other requested path. Discord events are processed in real-time and QDiscord supports quite some events already to make a useful bot.
+
+To see everything in action make sure to run the bot from within a terminal.
+
+
 ## TODO list
 
  - [ ] Implement Bot Core
@@ -51,7 +60,7 @@ All Qt supported platforms should be supported. Originally this is a personal bo
    - [ ] Implement a event handler for all the different Discord events
  - [ ] Implement a solid multithreaded environment **[QThread and Signal/Slots]**
    - [x] Handle UNIX signals (use C preprocessor to exclude Windows)
- - [ ] Implement basic HTTP server
+ - [x] Implement basic HTTP server
    - [ ] Implement basic Web UI
      - [ ] Implement actual Web UI with functionality
  - [ ] Implement Plugin API

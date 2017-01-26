@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     debugger->setMaxLogFilesToKeep(configManager->maxLogFilesToKeep());
     debugger->setLogDir(configManager->configPath() + "/logs");
     debugger->setEnabled(true);
-    debugger->printToTerminal(true); // for better debugging during development
+    debugger->printToTerminal(configManager->debuggerPrintToTerminal()); // true for debug builds, false otherwise
 
     // Initialize Server Thread
     QThread *serverThread = new QThread;
@@ -73,8 +73,6 @@ int main(int argc, char** argv)
     QObject::connect(server, &Server::stopped, serverThread, &QThread::quit);
     QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
     QObject::connect(serverThread, &QThread::finished, serverThread, &QThread::deleteLater);
-
-    QObject::connect(server, &Server::started, server, &Server::stop);
 
     serverThread->start();
 

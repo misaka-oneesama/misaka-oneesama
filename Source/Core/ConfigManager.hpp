@@ -35,6 +35,9 @@ public:
     void setMaxLogFilesToKeep(quint16);
     quint16 maxLogFilesToKeep() const;
 
+    void setDebuggerPrintToTerminal(bool);
+    bool debuggerPrintToTerminal() const;
+
     void setOAuthToken(const QString &token);
     const QString &token() const;
 
@@ -61,6 +64,7 @@ private:
 
     // CONFIGURABLE OPTIONS
     quint16 m_cfgMaxLogFilesToKeep = 0;
+    bool m_cfgDebuggerPrintToTerminal;
     QString m_cfgOAuthToken;
     QList<quint64> m_cfgJoinedGuilds;
 };
