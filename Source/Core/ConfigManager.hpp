@@ -35,6 +35,9 @@ public:
     void setMaxLogFilesToKeep(quint16);
     quint16 maxLogFilesToKeep() const;
 
+    void setOAuthToken(const QString &token);
+    const QString &token() const;
+
     void setJoinedGuilds(const QList<quint64> &guildIds);
     void addJoinedGuild(const quint64 &guildId);
     void removeJoinedGuild(const quint64 &guildId);
@@ -58,6 +61,7 @@ private:
 
     // CONFIGURABLE OPTIONS
     quint16 m_cfgMaxLogFilesToKeep = 0;
+    QString m_cfgOAuthToken;
     QList<quint64> m_cfgJoinedGuilds;
 };
 

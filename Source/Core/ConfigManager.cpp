@@ -80,6 +80,7 @@ void ConfigManager::loadConfig()
             this->m_configStream >> this->m_cfgVersion;
 
             this->m_configStream >> this->m_cfgMaxLogFilesToKeep;
+            this->m_configStream >> this->m_cfgOAuthToken;
             this->m_configStream >> this->m_cfgJoinedGuilds;
         }
 
@@ -126,6 +127,7 @@ void ConfigManager::saveConfig()
         this->m_configStream << this->m_cfgVersion;
 
         this->m_configStream << this->m_cfgMaxLogFilesToKeep;
+        this->m_configStream << this->m_cfgOAuthToken;
         this->m_configStream << this->m_cfgJoinedGuilds;
 
         this->m_configFile->flush();
@@ -153,6 +155,16 @@ void ConfigManager::setMaxLogFilesToKeep(quint16 max)
 quint16 ConfigManager::maxLogFilesToKeep() const
 {
     return this->m_cfgMaxLogFilesToKeep;
+}
+
+void ConfigManager::setOAuthToken(const QString &token)
+{
+    this->m_cfgOAuthToken = token;
+}
+
+const QString &ConfigManager::token() const
+{
+    return this->m_cfgOAuthToken;
 }
 
 void ConfigManager::setJoinedGuilds(const QList<quint64> &guildIds)

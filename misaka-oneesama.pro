@@ -23,3 +23,4 @@ include(External/QtWebApp/templateengine/templateengine.pri)
 
 # QDiscord (C++ Discord API wrapper written in Qt)
 include(External/QDiscord/QDiscord/src/depends.pri)
+INCLUDEPATH += External/QDiscord/QDiscord/src
