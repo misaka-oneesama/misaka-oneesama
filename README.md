@@ -8,7 +8,7 @@ Discord Bot with Web UI and Plugin support written in C++14
 **FreeBSD** [![FreeBSD Build Status](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/badge/icon)](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/) [![Discord Server](https://discordapp.com/api/guilds/238054360637112321/embed.png)](https://discord.gg/4dpCQXv)
 <br><br><br>
 
-#### Overview
+## Overview
 
 **ATTENTION: In development!**
 
@@ -17,11 +17,12 @@ Misaka-oneesama is an upcoming bot for Discord™ with a Web-based configuration
 I plan to develop some plugins by myself to use with the bot.
 
 
-#### Requirements
+## Requirements
 
 This are the requirements and dependencies which are required to build and operate the bot. Those may be subject to change during development.
 
- - UTF-8 compatible system environment (**important!**)
+ - UTF-8 compatible system environment and file system (**important!**)
+   - This software makes use of UTF-8 characters in both, runtime and file system I/O
  - C++14 compiler
  - Any Qt supported Operating System (Linux, \*BSD, macOS, Windows, etc.)
 
@@ -31,21 +32,23 @@ This are the requirements and dependencies which are required to build and opera
    - Qt WebSockets ─ for the Discord API communication
 
 
-#### Things used to build this bot
+##### Things used to build this Bot
 
  - [Qt](https://www.qt.io)
  - [QDiscord](https://github.com/george99g/QDiscord) ─ Qt C++ Discord API wrapper by [george99g](https://github.com/george99g)
  - [QtWebApp](http://stefanfrings.de/qtwebapp/index-en.html) ─ Qt C++ HTTP Server by [Stefan Frings](http://stefanfrings.de)
 
 
-#### Support Platforms
+##### Note about Support Platforms
 
-All Qt supported platforms should be supported. Originally this is a personal bot and it needs to work mainly on FreeBSD only, which is the OS of my choice for servers.
+All Qt supported platforms should be supported. Originally this is a personal bot and it needs to work mainly on FreeBSD only, which is the OS of my choice for servers. If there are any issues on the OS of your choice feel free to fix it yourself and make a *pull request* or open an issue and let me know.
 
 
-#### TODO list
+## TODO list
 
  - [ ] Implement Bot Core
+ - [ ] Implement a solid multithreaded environment **[QThread and Signal/Slots]**
+   - [ ] Handle UNIX signals (use C preprocessor to exclude Windows)
  - [ ] Implement basic HTTP server
    - [ ] Implement basic Web UI
      - [ ] Implement actual Web UI with functionality
@@ -54,3 +57,11 @@ All Qt supported platforms should be supported. Originally this is a personal bo
    - [ ] Chat commands with simple text responses
    - [ ] Server Info, User Info, Role Info, ...
 
+<br>
+
+## Copyright Notices
+
+- **QDiscord** is licensed under the terms and conditions of the `LGPL-3.0`
+- **QtWebApp** is licensed under the terms and conditions of the `LGPL-3.0`
+
+The character 美琴**御坂** (Mikoto Misaka) <sup>[Picture]</sup> is a fictional anime character created by 鎌池和馬 (Kamachi Kazuma). She is a main character in the show とある科学の超電磁砲（レールガン）.
