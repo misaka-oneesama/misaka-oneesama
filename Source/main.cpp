@@ -1,8 +1,12 @@
 #include <QCoreApplication>
+#include <QThread>
+
 #include <QDebug>
 #include <iostream>
 
-#include <Source/global.hpp>
+#include <Source/Global.hpp>
+
+#include "Server/Server.hpp"
 
 int main(int argc, char** argv)
 {
@@ -21,11 +25,29 @@ int main(int argc, char** argv)
     debugger->setMaxLogFilesToKeep(configManager->maxLogFilesToKeep());
     debugger->setLogDir(configManager->configPath() + "/logs");
     debugger->setEnabled(true);
+    debugger->printToTerminal(true); // for better debugging during development
 
-    //int status = a.exec();
+    // Initialize Server Thread
+    QThread *serverThread = new QThread;
+    Server *server = new Server();
+    server->moveToThread(serverThread);
+
+    QObject::connect(serverThread, &QThread::started, server, &Server::start);
+    QObject::connect(server, &Server::stopped, serverThread, &QThread::quit);
+    QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
+    QObject::connect(serverThread, &QThread::finished, serverThread, &QThread::deleteLater);
+
+    QObject::connect(server, &Server::started, server, &Server::stop);
+
+    serverThread->start();
+
+    // notice: segfauls on termination using UNIX signal
+    // fixme: implement a proper event loop for the code in here
+
+    int status = a.exec();
 
     delete configManager;
     delete debugger;
 
-    return 0; //status;
+    return status;
 }

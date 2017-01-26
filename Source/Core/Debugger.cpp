@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QFileInfoList>
 #include <QDateTime>
+#include <QMutexLocker>
 
 #include <iostream>
 
@@ -119,8 +120,20 @@ void Debugger::setMaxLogFilesToKeep(quint16 c)
     this->m_maxLogFiles = c;
 }
 
+void Debugger::printToTerminal(bool enabled)
+{
+    this->m_printToTerminal = enabled;
+}
+
 void Debugger::notice(const QString &message)
 {
+    QMutexLocker(&this->m_mutex);
+
+    if (this->m_printToTerminal)
+    {
+        std::cerr << qUtf8Printable(message) << std::endl;
+    }
+
     if (this->m_valid && this->m_enabled)
     {
         this->m_logStream << QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss") << " | "
@@ -132,6 +145,13 @@ void Debugger::notice(const QString &message)
 
 void Debugger::warning(const QString &message)
 {
+    QMutexLocker(&this->m_mutex);
+
+    if (this->m_printToTerminal)
+    {
+        std::cerr << "WARNING! " << qUtf8Printable(message) << std::endl;
+    }
+
     if (this->m_valid && this->m_enabled)
     {
         this->m_logStream << QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss") << " | "
@@ -143,6 +163,13 @@ void Debugger::warning(const QString &message)
 
 void Debugger::error(const QString &message)
 {
+    QMutexLocker(&this->m_mutex);
+
+    if (this->m_printToTerminal)
+    {
+        std::cerr << "ERROR! " << qUtf8Printable(message) << std::endl;
+    }
+
     if (this->m_valid && this->m_enabled)
     {
         this->m_logStream << QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss") << " | "

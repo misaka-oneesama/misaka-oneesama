@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QFile>
 #include <QTextStream>
+#include <QMutex>
 
 class Debugger
 {
@@ -18,6 +19,8 @@ public:
     void setEnabled(bool);
     void setMaxLogFilesToKeep(quint16);
 
+    void printToTerminal(bool);
+
     void notice(const QString&);
     void warning(const QString&);
     void error(const QString&);
@@ -26,6 +29,10 @@ private:
     QDir m_logDir;
     QFile *m_logFile = nullptr;
     QTextStream m_logStream;
+
+    bool m_printToTerminal = false;
+
+    QMutex m_mutex;
 
     bool m_valid = false;
     bool m_enabled = false;
