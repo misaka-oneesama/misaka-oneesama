@@ -10,12 +10,12 @@
    #include <QSslConfiguration>
 #endif
 #include <QTcpSocket>
-#include <QSettings>
 #include <QTimer>
 #include <QThread>
 #include "httpglobal.h"
 #include "httprequest.h"
 #include "httprequesthandler.h"
+#include "httplistenersettings.h"
 
 namespace stefanfrings {
 
@@ -58,7 +58,7 @@ public:
       @param requestHandler Handler that will process each incoming HTTP request
       @param sslConfiguration SSL (HTTPS) will be used if not NULL
     */
-    HttpConnectionHandler(QSettings* settings, HttpRequestHandler* requestHandler, QSslConfiguration* sslConfiguration=NULL);
+    HttpConnectionHandler(const HttpListenerSettings &settings, HttpRequestHandler* requestHandler, QSslConfiguration* sslConfiguration=NULL);
 
     /** Destructor */
     virtual ~HttpConnectionHandler();
@@ -72,7 +72,7 @@ public:
 private:
 
     /** Configuration settings */
-    QSettings* settings;
+    HttpListenerSettings settings;
 
     /** TCP socket of the current connection  */
     QTcpSocket* socket;

@@ -10,6 +10,7 @@ CONFIG(debug, debug|release) {
 
 HEADERS += $$PWD/httpglobal.h \
            $$PWD/httplistener.h \
+           $$PWD/httplistenersettings.h \
            $$PWD/httpconnectionhandler.h \
            $$PWD/httpconnectionhandlerpool.h \
            $$PWD/httprequest.h \

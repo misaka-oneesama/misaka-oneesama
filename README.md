@@ -61,6 +61,11 @@ To see everything in action make sure to run the bot from within a terminal.
  - [ ] Implement a solid multithreaded environment **[QThread and Signal/Slots]**
    - [x] Handle UNIX signals (use C preprocessor to exclude Windows)
  - [x] Implement basic HTTP server
+   - [ ] Improve QtWebApp
+     - [ ] use alternative config store [`QSettings` spams unnecessary useless files to disk]
+     - [ ] get rid of unnecessary variable copying
+     - [ ] use C++14 features, get rid of ANSI C - C++ hybrid code
+     - [ ] improve code readability [reformat coding style]
    - [ ] Implement basic Web UI
      - [ ] Implement actual Web UI with functionality
  - [ ] Implement Plugin API

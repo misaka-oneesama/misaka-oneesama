@@ -67,6 +67,8 @@ int main(int argc, char** argv)
     // Initialize Server Thread
     QThread *serverThread = new QThread;
     Server *server = new Server();
+    server->setListeningAddress(QLatin1String("127.0.0.1")); //= todo: add to ConfigManager
+    server->setListeningPort(4555);                          //=
     server->moveToThread(serverThread);
 
     QObject::connect(serverThread, &QThread::started, server, &Server::start);

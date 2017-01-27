@@ -10,10 +10,9 @@
 
 using namespace stefanfrings;
 
-HttpListener::HttpListener(QSettings* settings, HttpRequestHandler* requestHandler, QObject *parent)
+HttpListener::HttpListener(const HttpListenerSettings &settings, HttpRequestHandler* requestHandler, QObject *parent)
     : QTcpServer(parent)
 {
-    Q_ASSERT(settings!=0);
     Q_ASSERT(requestHandler!=0);
     pool=NULL;
     this->settings=settings;
@@ -38,15 +37,15 @@ void HttpListener::listen()
     {
         pool=new HttpConnectionHandlerPool(settings,requestHandler);
     }
-    QString host = settings->value("host").toString();
-    int port=settings->value("port").toInt();
+    QString host = settings.host;
+    int port=settings.port;
     QTcpServer::listen(host.isEmpty() ? QHostAddress::Any : QHostAddress(host), port);
     if (!isListening())
     {
         qCritical("HttpListener: Cannot bind on port %i: %s",port,qPrintable(errorString()));
     }
     else {
-        qDebug("HttpListener: Listening on port %i",port);
+        qDebug("HttpListener: Listening on port %s:%i",host.toUtf8().constData(),port);
     }
 }
 

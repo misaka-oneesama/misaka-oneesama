@@ -7,12 +7,12 @@
 #define HTTPLISTENER_H
 
 #include <QTcpServer>
-#include <QSettings>
 #include <QBasicTimer>
 #include "httpglobal.h"
 #include "httpconnectionhandler.h"
 #include "httpconnectionhandlerpool.h"
 #include "httprequesthandler.h"
+#include "httplistenersettings.h"
 
 namespace stefanfrings {
 
@@ -54,7 +54,7 @@ public:
       @param parent Parent object.
       @warning Ensure to close or delete the listener before deleting the request handler.
     */
-    HttpListener(QSettings* settings, HttpRequestHandler* requestHandler, QObject* parent = NULL);
+    HttpListener(const HttpListenerSettings &settings, HttpRequestHandler* requestHandler, QObject* parent = NULL);
 
     /** Destructor */
     virtual ~HttpListener();
@@ -77,8 +77,7 @@ protected:
 
 private:
 
-    /** Configuration settings for the HTTP server */
-    QSettings* settings;
+    HttpListenerSettings settings;
 
     /** Point to the reuqest handler which processes all HTTP requests */
     HttpRequestHandler* requestHandler;

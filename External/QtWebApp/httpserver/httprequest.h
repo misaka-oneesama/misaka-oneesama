@@ -11,10 +11,10 @@
 #include <QTcpSocket>
 #include <QMap>
 #include <QMultiMap>
-#include <QSettings>
 #include <QTemporaryFile>
 #include <QUuid>
 #include "httpglobal.h"
+#include "httplistenersettings.h"
 
 namespace stefanfrings {
 
@@ -48,7 +48,7 @@ public:
       Constructor.
       @param settings Configuration settings
     */
-    HttpRequest(QSettings* settings);
+    HttpRequest(const HttpListenerSettings &settings);
 
     /**
       Destructor.

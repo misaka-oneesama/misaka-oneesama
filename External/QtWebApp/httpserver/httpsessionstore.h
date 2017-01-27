@@ -7,6 +7,7 @@
 #define HTTPSESSIONSTORE_H
 
 #include <QObject>
+#include <QSettings>
 #include <QMap>
 #include <QTimer>
 #include <QMutex>
