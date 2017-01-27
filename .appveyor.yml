@@ -9,13 +9,13 @@ branches:
   only:
   - master
 
-build: off
-deploy: off
-
 clone_folder: C:\misaka-oneesama
 
-script:
-  - cd C:\misaka-oneesama
-  - mkdir build
-  - cd build
-  - C:\Qt\5.7\msvc2015_64\bin\qmake ..\misaka-oneesama.pro
+build_script:
+  - cmd: >-
+      cd C:\misaka-oneesama
+      mkdir build
+      cd build
+      C:\Qt\5.7\msvc2015_64\bin\qmake ..\misaka-oneesama.pro
+
+deploy: off

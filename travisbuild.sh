@@ -4,6 +4,10 @@
 cd "$(dirname "$(realpath "$0")")"
 #########################################################################
 
+# note:
+#   when modifying this script please note that we are inside a
+#   ArchLinux chroot
+
 ### Setup environment
 
 export QMAKE_BIN="qmake-qt5"
