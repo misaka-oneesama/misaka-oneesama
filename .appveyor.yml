@@ -13,6 +13,7 @@ clone_folder: C:\misaka-oneesama
 
 build_script:
   - cd C:\misaka-oneesama
+  - git submodule update --init
   - mkdir build
   - cd build
   - C:\Qt\5.7\msvc2015_64\bin\qmake ..\misaka-oneesama.pro
