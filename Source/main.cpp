@@ -90,6 +90,8 @@ int main(int argc, char** argv)
     QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);
     QObject::connect(botThread, &QThread::finished, botThread, &QThread::deleteLater);
 
+    //QObject::connect(serverThread, &QThread::finished, botThread, &QThread::quit);
+
     botThread->start();
 
     // notice: segfauls on termination using UNIX signal
@@ -100,6 +102,11 @@ int main(int argc, char** argv)
     std::cout << "---App: cleaning up and freeing resources..." << std::endl;
 
     delete a;
+
+//    delete botThread;
+//    delete botManager;
+//    delete serverThread;
+//    delete server;
 
     delete configManager;
     delete debugger;

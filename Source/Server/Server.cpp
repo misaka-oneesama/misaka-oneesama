@@ -1,6 +1,7 @@
 #include "Server.hpp"
 
 #include <Source/Global.hpp>
+#include <QThread>
 
 Server::Server(QObject *parent)
     : QObject(parent)
@@ -90,6 +91,15 @@ void Server::p_startPrivate()
 void Server::stop()
 {
     this->p_stopPrivate();
+    emit stopped();
+}
+
+void Server::stopAndQuitThread()
+{
+    this->p_stopPrivate();
+
+    static_cast<QThread*>(this->parent())->requestInterruption();
+    static_cast<QThread*>(this->parent())->quit();
     emit stopped();
 }
 

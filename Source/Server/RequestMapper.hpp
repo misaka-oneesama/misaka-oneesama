@@ -5,7 +5,8 @@
 
 using namespace stefanfrings;
 
-class RequestMapper : public HttpRequestHandler {
+class RequestMapper : public HttpRequestHandler
+{
     Q_OBJECT
     Q_DISABLE_COPY(RequestMapper)
 

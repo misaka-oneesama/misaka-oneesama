@@ -30,6 +30,7 @@ public slots:
 
     void start();
     void stop();
+    void stopAndQuitThread();
     void restart(); // wrapper around `stop` and `start`
 
 signals:

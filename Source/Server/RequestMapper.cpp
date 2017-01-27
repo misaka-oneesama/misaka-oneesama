@@ -1,6 +1,7 @@
 #include "RequestMapper.hpp"
 
 #include <Source/Global.hpp>
+#include "Server.hpp"
 
 #include <iostream>
 
@@ -30,14 +31,23 @@ void RequestMapper::service(HttpRequest &request, HttpResponse &response)
 
     if (path == "/")
     {
-        response.setStatus(200, QString("OK").toUtf8());
+        response.setStatus(200);
         response.write(QString("It's working :D").toUtf8(), true);
+    }
+
+    // shutdown the bot
+    else if (path == "/shutdown")
+    {
+        response.setStatus(200);
+        response.write(QByteArray(), true);
+
+        static_cast<Server*>(this->parent())->stopAndQuitThread();
     }
 
     else
     {
-        response.setStatus(404, QString("Not Found").toUtf8());
-        response.write(QString("No handler for URL '%1' found").arg(path.constData()).toUtf8());
+        response.setStatus(404);
+        response.write(QString("No handler for URL '%1' found").arg(path.constData()).toUtf8(), true);
     }
 
     debugger->notice(QString("[HTTP %1] RequestMapper: finished request for (path=%2)").arg(request.getMethod().constData(), path.constData()));
