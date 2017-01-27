@@ -11,11 +11,16 @@ branches:
 
 clone_folder: C:\misaka-oneesama
 
+install:
+  - set QTDIR=C:\Qt\5.7\msvc2015_64
+  - set PATH=%QTDIR%\bin;%PATH%
+
 build_script:
   - cd C:\misaka-oneesama
   - git submodule update --init
   - mkdir build
   - cd build
-  - C:\Qt\5.7\msvc2015_64\bin\qmake ..\misaka-oneesama.pro
+  - qmake ..\misaka-oneesama.pro
+  - nmake
 
 deploy: off
