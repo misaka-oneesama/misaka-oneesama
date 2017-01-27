@@ -1,0 +1,19 @@
+language: cpp
+sudo: required
+
+os:
+  - linux
+
+compiler:
+  - gcc
+
+arch:
+  packages:
+    - qt5-base
+    - qt5-websockets
+
+  script:
+    - "./travisbuild.sh"
+
+script:
+  - "curl -s https://raw.githubusercontent.com/mikkeloscar/arch-travis/master/arch-travis.sh | bash"

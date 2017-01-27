@@ -5,7 +5,7 @@
 
 Discord Bot with Web UI and Plugin support written in C++14
 
-**FreeBSD** [![FreeBSD Build Status](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/badge/icon)](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/) [![Discord Server](https://discordapp.com/api/guilds/238054360637112321/embed.png)](https://discord.gg/4dpCQXv)
+**FreeBSD** [![FreeBSD Build Status](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/badge/icon)](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/) | **Linux** [![Linux Build Status](https://travis-ci.org/misaka-oneesama/misaka-oneesama.svg?branch=master)](https://travis-ci.org/misaka-oneesama/misaka-oneesama) | **Windows** [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/misaka-oneesama/misaka-oneesama?svg=true)](https://ci.appveyor.com/project/GhettoGirl/misaka-oneesama) | [![Discord Server](https://discordapp.com/api/guilds/238054360637112321/embed.png)](https://discord.gg/4dpCQXv)
 <br><br><br>
 
 ## Overview
