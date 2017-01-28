@@ -1,0 +1,9 @@
+# GitHub Language Metrics Configuration
+# https://github.com/github/linguist#overrides
+
+Jenkinsfile linguist-vendored
+jenkinsbuild.sh linguist-vendored
+travisbuild.sh linguist-vendored
+
+.appveyor.yml linguist-vendored
+.travis.yml linguist-vendored
