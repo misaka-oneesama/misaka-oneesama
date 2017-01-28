@@ -17,14 +17,10 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 # Define DEBUG and RELEASE macros
-CONFIG (debug) {
+CONFIG (debug, debug|release) {
     DEFINES += MISAKA_DEBUG
-}
-CONFIG (release) {
+} else {
     DEFINES += MISAKA_RELEASE
-}
-CONFIG (profile) {
-    DEFINES += MISAKA_PROFILING
 }
 
 # QtWebApp (C++ HTTP Server written in Qt)
