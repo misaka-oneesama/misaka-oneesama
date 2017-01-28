@@ -17,13 +17,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000
 
 # Define DEBUG and RELEASE macros
-debug {
+CONFIG (debug) {
     DEFINES += MISAKA_DEBUG
 }
-release {
+CONFIG (release) {
     DEFINES += MISAKA_RELEASE
 }
-profile {
+CONFIG (profile) {
     DEFINES += MISAKA_PROFILING
 }
 
