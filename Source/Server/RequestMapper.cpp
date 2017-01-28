@@ -36,6 +36,9 @@ void RequestMapper::service(HttpRequest &request, HttpResponse &response)
     }
 
     // shutdown the bot
+    /// FIXME / INCOMPLETE
+    // currently segfaults after the server stopped
+    // what happens with the botmanager instance?
     else if (path == "/shutdown")
     {
         response.setStatus(200);
