@@ -44,7 +44,7 @@ signals:
 private:
     bool m_configured = false;
 
-    HttpListenerSettings m_httpListenerSettings;
+    HttpServerSettings *m_httpServerSettings = nullptr;
     HttpListener *m_httpListener = nullptr;
     RequestMapper *m_requestMapper = nullptr;
 

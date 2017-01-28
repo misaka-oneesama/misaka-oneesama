@@ -6,6 +6,8 @@
 Server::Server(QObject *parent)
     : QObject(parent)
 {
+    this->m_httpServerSettings = new HttpServerSettings;
+
     this->m_configured = true;
 }
 
@@ -15,12 +17,17 @@ Server::Server(const QLatin1String &listeningAddress, quint16 listeningPort, QOb
     this->m_listeningAddress = listeningAddress;
     this->m_listeningPort = listeningPort;
 
-    this->m_httpListenerSettings.host = listeningAddress;
-    this->m_httpListenerSettings.port = listeningPort;
+    this->m_httpServerSettings->host = listeningAddress;
+    this->m_httpServerSettings->port = listeningPort;
 }
 
 Server::~Server()
 {
+    if (this->m_httpServerSettings)
+    {
+        delete this->m_httpServerSettings;
+        this->m_httpServerSettings = nullptr;
+    }
 }
 
 void Server::setListeningAddress(const QLatin1String &address)
@@ -28,7 +35,7 @@ void Server::setListeningAddress(const QLatin1String &address)
     if (address.size() != 0)
     {
         this->m_listeningAddress = address;
-        this->m_httpListenerSettings.host = address;
+        this->m_httpServerSettings->host = address;
         debugger->notice("Server: set listening address to " + address);
         emit listeningAddressChanged();
     }
@@ -46,7 +53,7 @@ void Server::setListeningPort(quint16 port)
     if (port != 0)
     {
         this->m_listeningPort = port;
-        this->m_httpListenerSettings.port = port;
+        this->m_httpServerSettings->port = port;
         debugger->notice("Server: set listening port to " + QString::number(port));
         emit listeningPortChanged();
     }
@@ -78,7 +85,7 @@ void Server::p_startPrivate()
     if (!this->m_httpListener && !this->m_requestMapper)
     {
         this->m_requestMapper = new RequestMapper(this);
-        this->m_httpListener = new HttpListener(this->m_httpListenerSettings, this->m_requestMapper, this);
+        this->m_httpListener = new HttpListener(this->m_httpServerSettings, this->m_requestMapper, this);
         debugger->notice("Server: started");
     }
 
