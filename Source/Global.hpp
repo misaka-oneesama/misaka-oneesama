@@ -4,6 +4,8 @@
 #include "Core/Debugger.hpp"
 #include "Core/ConfigManager.hpp"
 
+#include "Core/ThreadId.hpp"
+
 extern Debugger *debugger;
 extern ConfigManager *configManager;
 

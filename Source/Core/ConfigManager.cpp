@@ -6,12 +6,18 @@
 
 #include <iostream>
 
+#ifdef MISAKA_DEBUG
+#define MISAKA_CONFIG_FILENAME "/settings.debug.bin"
+#else
+#define MISAKA_CONFIG_FILENAME "/settings.bin"
+#endif
+
 ConfigManager::ConfigManager()
     : m_valid(false)
 {
     const QString cfgBasePath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
     this->m_configPath = cfgBasePath + '/' + qApp->applicationName();
-    this->m_configFilePath = this->m_configPath + "/settings.bin";
+    this->m_configFilePath = this->m_configPath + MISAKA_CONFIG_FILENAME;
 
     if (QDir(cfgBasePath).mkdir(qApp->applicationName()) ||
         QDir(this->m_configPath).exists())
@@ -107,7 +113,7 @@ void ConfigManager::resetConfig()
     this->m_cfgVersion = 0x00000100;
 
     this->m_cfgMaxLogFilesToKeep = 5;
-#ifdef QT_DEBUG
+#ifdef MISAKA_DEBUG
     this->m_cfgDebuggerPrintToTerminal = true;
 #else
     this->m_cfgDebuggerPrintToTerminal = false;

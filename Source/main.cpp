@@ -32,6 +32,8 @@ int main(int argc, char** argv)
     a->setOrganizationName(QString::fromUtf8("マギルゥーベルベット"));
     a->setOrganizationDomain(QLatin1String("magiruuvelvet.gdn"));
 
+    QThread::currentThread()->setUserData(0, new ThreadId("main"));
+
 #ifdef Q_OS_UNIX
     std::cout << "---App: registering signals SIGINT, SIGTERM and SIGQUIT..." << std::endl;
     signal(SIGINT, terminate);
@@ -64,8 +66,12 @@ int main(int argc, char** argv)
     debugger->setEnabled(true);
     debugger->printToTerminal(configManager->debuggerPrintToTerminal()); // true for debug builds, false otherwise
 
+    debugger->notice("Creating threads...");
+
     // Initialize Server Thread
+    debugger->notice("Creating server thread...");
     QThread *serverThread = new QThread;
+    serverThread->setUserData(0, new ThreadId("server"));
     Server *server = new Server();
     server->setListeningAddress(QLatin1String("127.0.0.1")); //= todo: add to ConfigManager
     server->setListeningPort(4555);                          //=
@@ -77,9 +83,12 @@ int main(int argc, char** argv)
     QObject::connect(serverThread, &QThread::finished, serverThread, &QThread::deleteLater);
 
     serverThread->start();
+    debugger->notice("Server thread started.");
 
     // Initialize Bot Thread
+    debugger->notice("Creating bot thread...");
     QThread *botThread = new QThread;
+    botThread->setUserData(0, new ThreadId("bot"));
     BotManager *botManager = new BotManager();
     botManager->moveToThread(botThread);
     botManager->setOAuthToken(configManager->token());
@@ -93,6 +102,7 @@ int main(int argc, char** argv)
     //QObject::connect(serverThread, &QThread::finished, botThread, &QThread::quit);
 
     botThread->start();
+    debugger->notice("Bot thread started.");
 
     // notice: segfauls on termination using UNIX signal
     // fixme: implement a proper event loop for the code in here

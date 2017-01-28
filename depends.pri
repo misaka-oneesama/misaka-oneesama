@@ -3,6 +3,7 @@ SOURCES += \
     $$PWD/Source/Global.cpp \
     \
     $$PWD/Source/Core/ConfigManager.cpp \
+    $$PWD/Source/Core/ThreadId.cpp \
     $$PWD/Source/Core/Debugger.cpp \
     $$PWD/Source/Core/BotManager.cpp \
     \
@@ -13,6 +14,7 @@ HEADERS += \
     $$PWD/Source/Global.hpp \
     \
     $$PWD/Source/Core/ConfigManager.hpp \
+    $$PWD/Source/Core/ThreadId.hpp \
     $$PWD/Source/Core/Debugger.hpp \
     $$PWD/Source/Core/BotManager.hpp \
     \

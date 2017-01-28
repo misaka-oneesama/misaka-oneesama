@@ -11,7 +11,6 @@ RequestMapper::RequestMapper(QObject* parent)
     debugger->notice("RequestMapper created");
 }
 
-
 RequestMapper::~RequestMapper()
 {
     debugger->notice("RequestMapper destroyed");
@@ -19,7 +18,6 @@ RequestMapper::~RequestMapper()
 
 void RequestMapper::service(HttpRequest &request, HttpResponse &response)
 {
-    std::cout << "................" << std::endl;
     QByteArray path = request.getPath();
     debugger->notice(QString("[HTTP %1] RequestMapper: (path=%2)").arg(request.getMethod().constData(), path.constData()));
 
