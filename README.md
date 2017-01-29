@@ -29,8 +29,7 @@ This are the requirements and dependencies which are required to build and opera
  - C++14 compiler
  - Any Qt supported Operating System (Linux, \*BSD, macOS, Windows, etc.)
 
- - [Qt](https://www.qt.io) 5.6 or 5.7 (lower versions may work too, but not recommended) <br>
-   Qt 5.8 has obsoleted some APIs which broke QDiscord. Qt 5.8 doesn't work yet by now - if you wondering the Travis CI Linux build failure status.
+ - [Qt](https://www.qt.io) 5.6+ (lower versions may work too, but not recommended)
    - Qt Core
    - Qt Network ─ for the HTTP server which operates the Web UI
    - Qt WebSockets ─ for the Discord API communication
