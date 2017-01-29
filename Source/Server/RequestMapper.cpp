@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-RequestMapper::RequestMapper(QObject* parent)
+RequestMapper::RequestMapper(QObject *parent)
     : HttpRequestHandler(parent)
 {
     debugger->notice("RequestMapper created");

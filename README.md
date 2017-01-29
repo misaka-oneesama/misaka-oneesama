@@ -64,14 +64,18 @@ To see everything in action make sure to run the bot from within a terminal.
  - [ ] Implement a solid multithreaded environment **[QThread and Signal/Slots]**
    - [x] Handle UNIX signals (use C preprocessor to exclude Windows)
  - [x] Implement basic HTTP server
-   - [ ] Improve QtWebApp
-     - [ ] use alternative config store [`QSettings` spams unnecessary useless files to disk]
-     - [ ] get rid of unnecessary variable copying
-     - [ ] use C++14 features, get rid of ANSI C - C++ hybrid code
-     - [ ] improve code readability [reformat coding style]
+   - [ ] Improve QtWebApp (`HttpServer` module)
+     - [x] use alternative config store [`QSettings` spams unnecessary useless files to disk]
+     - [x] get rid of unnecessary variable copying
+     - [x] use C++14 features, get rid of ANSI C - C++ hybrid code
+     - [x] improve code readability [reformat coding style]
+     - [ ] significantly improve the static file controller and make it more flexible <br>
+           the current implementation has a hardcoded incomplete and ugly mime type list <br>
+           the use of `QMimeDatabase` sounds like a good idea here :)
    - [ ] Implement basic Web UI
      - [ ] Implement actual Web UI with functionality
  - [ ] Implement Plugin API
+   - [ ] Implement config store for plugins, one file per plugin
  - [ ] Implement some plugins
    - [ ] Chat commands with simple text responses
    - [ ] Server Info, User Info, Role Info, ...
