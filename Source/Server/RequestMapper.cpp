@@ -3,7 +3,10 @@
 #include <Source/Global.hpp>
 #include "Server.hpp"
 
+#include "StaticFileController.hpp"
+
 #include <iostream>
+#include <QStandardPaths>
 
 RequestMapper::RequestMapper(QObject *parent)
     : HttpRequestHandler(parent)
@@ -43,6 +46,15 @@ void RequestMapper::service(HttpRequest &request, HttpResponse &response)
         response.write(QByteArray(), true);
 
         static_cast<Server*>(this->parent())->stopAndQuitThread();
+    }
+
+    // static file controller test
+    else if (path.startsWith("/"))
+    {
+        static StaticFileController *staticFileController = new StaticFileController(
+                    new QtWebApp::StaticFileControllerConfig(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)));
+        staticFileController->setContentTypeEncoding("UTF-8");
+        staticFileController->service(request, response);
     }
 
     else

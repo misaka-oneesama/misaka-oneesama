@@ -24,9 +24,9 @@ CONFIG (debug, debug|release) {
 }
 
 # QtWebApp (C++ HTTP Server written in Qt)
-include(External/QtWebApp/logging/logging.pri)
-include(External/QtWebApp/httpserver/httpserver.pri)
+include(External/QtWebApp/HttpServer/HttpServer.pri)
 include(External/QtWebApp/templateengine/templateengine.pri)
+include(External/QtWebApp/logging/logging.pri)
 
 # QDiscord (C++ Discord API wrapper written in Qt)
 include(External/QDiscord/QDiscord/src/depends.pri)

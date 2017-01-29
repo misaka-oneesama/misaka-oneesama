@@ -6,7 +6,7 @@
 Server::Server(QObject *parent)
     : QObject(parent)
 {
-    this->m_httpServerSettings = new HttpServerSettings;
+    this->m_httpServerSettings = new QtWebApp::HttpServerSettings;
 
     this->m_configured = true;
 }

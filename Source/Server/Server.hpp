@@ -9,7 +9,7 @@
 // QtWebApp
 #include "HttpListener.hpp"
 
-using namespace stefanfrings;
+using namespace QtWebApp::HttpServer;
 
 class Server : public QObject
 {
@@ -44,7 +44,7 @@ signals:
 private:
     bool m_configured = false;
 
-    HttpServerSettings *m_httpServerSettings = nullptr;
+    QtWebApp::HttpServerSettings *m_httpServerSettings = nullptr;
     HttpListener *m_httpListener = nullptr;
     RequestMapper *m_requestMapper = nullptr;
 

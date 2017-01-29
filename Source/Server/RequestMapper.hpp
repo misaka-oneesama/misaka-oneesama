@@ -3,7 +3,7 @@
 
 #include "HttpRequestHandler.hpp"
 
-using namespace stefanfrings;
+using namespace QtWebApp::HttpServer;
 
 class RequestMapper : public HttpRequestHandler
 {
