@@ -34,8 +34,7 @@ Debugger::~Debugger()
     if (this->m_logFile)
     {
         this->m_logFile->close();
-        delete this->m_logFile;
-        this->m_logFile = nullptr;
+        this->m_logFile.reset();
     }
 
     this->m_logStream.setDevice(0);
@@ -92,10 +91,10 @@ void Debugger::setEnabled(bool enabled)
             }
         }
 
-        this->m_logFile = new QFile(this->m_logDir.absolutePath() + '/' + QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd--hh-mm-ss") + ".log");
+        this->m_logFile.reset(new QFile(this->m_logDir.absolutePath() + '/' + QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd--hh-mm-ss") + ".log"));
         if (this->m_logFile->open(QFile::WriteOnly | QFile::Text))
         {
-            this->m_logStream.setDevice(this->m_logFile);
+            this->m_logStream.setDevice(this->m_logFile.get());
             std::cerr << "Debugger: new log file " << qUtf8Printable(this->m_logFile->fileName()) << std::endl;
 
             this->m_logStream << qApp->applicationName() << " " << qApp->applicationVersion() << "\n\n";
@@ -109,8 +108,7 @@ void Debugger::setEnabled(bool enabled)
             this->m_enabled = false;
 
             this->m_logFile->close();
-            delete this->m_logFile;
-            this->m_logFile = nullptr;
+            this->m_logFile.reset();
 
             std::cerr << "Debugger: unable to create log file" << std::endl;
         }

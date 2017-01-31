@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QString>
 
+#include <memory>
+
 #include "RequestMapper.hpp"
 
 // QtWebApp
@@ -44,9 +46,9 @@ signals:
 private:
     bool m_configured = false;
 
-    QtWebApp::HttpServerSettings *m_httpServerSettings = nullptr;
-    HttpListener *m_httpListener = nullptr;
-    RequestMapper *m_requestMapper = nullptr;
+    std::unique_ptr<QtWebApp::HttpServerSettings> m_httpServerSettings;
+    std::unique_ptr<HttpListener> m_httpListener;
+    std::unique_ptr<RequestMapper> m_requestMapper;
 
     QLatin1String m_listeningAddress = QLatin1String("127.0.0.1");
     quint16 m_listeningPort = 4555; // default server port

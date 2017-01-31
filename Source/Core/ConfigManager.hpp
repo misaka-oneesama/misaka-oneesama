@@ -5,6 +5,8 @@
 #include <QFile>
 #include <QDataStream>
 
+#include <memory>
+
 class ConfigManager
 {
 public:
@@ -51,7 +53,7 @@ private:
     QString m_configPath;
     QString m_configFilePath;
 
-    QFile *m_configFile = nullptr;
+    std::unique_ptr<QFile> m_configFile;
     QDataStream m_configStream;
 
     // settings.bin header
@@ -60,7 +62,7 @@ private:
     // version of the configuration file
     quint32 m_cfgVersion;
 
-    void p_resetStream(bool force = false);
+    void p_resetStream();
 
     // CONFIGURABLE OPTIONS
     quint16 m_cfgMaxLogFilesToKeep = 0;

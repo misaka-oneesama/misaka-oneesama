@@ -7,6 +7,8 @@
 #include <QTextStream>
 #include <QMutex>
 
+#include <memory>
+
 class Debugger
 {
 public:
@@ -27,7 +29,7 @@ public:
 
 private:
     QDir m_logDir;
-    QFile *m_logFile = nullptr;
+    std::unique_ptr<QFile> m_logFile;
     QTextStream m_logStream;
 
     bool m_printToTerminal = false;

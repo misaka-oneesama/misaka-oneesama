@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <csignal>
+#include <memory>
 
 /// temporarily included
 #include <QDebug>
@@ -14,7 +15,8 @@
 #include "Server/Server.hpp"
 #include "Core/BotManager.hpp"
 
-QCoreApplication *a = nullptr;
+std::unique_ptr<QCoreApplication> a;
+std::vector<std::unique_ptr<ThreadId>> threadList;
 
 #ifdef Q_OS_UNIX
 void terminate(int)
@@ -26,13 +28,17 @@ void terminate(int)
 
 int main(int argc, char** argv)
 {
-    a = new QCoreApplication(argc, argv);
+    a.reset(new QCoreApplication(argc, argv));
     a->setApplicationName(QString::fromUtf8("御坂ーお姉さま"));
     a->setApplicationVersion(QLatin1String("v0.0.1"));
     a->setOrganizationName(QString::fromUtf8("マギルゥーベルベット"));
     a->setOrganizationDomain(QLatin1String("magiruuvelvet.gdn"));
 
-    QThread::currentThread()->setUserData(0, new ThreadId("main"));
+    threadList.push_back(std::move(std::unique_ptr<ThreadId>(new ThreadId("main"))));
+    threadList.push_back(std::move(std::unique_ptr<ThreadId>(new ThreadId("server"))));
+    threadList.push_back(std::move(std::unique_ptr<ThreadId>(new ThreadId("bot"))));
+
+    QThread::currentThread()->setUserData(0, threadList.at(0).get());
 
 #ifdef Q_OS_UNIX
     std::cout << "---App: registering signals SIGINT, SIGTERM and SIGQUIT..." << std::endl;
@@ -71,7 +77,7 @@ int main(int argc, char** argv)
     // Initialize Server Thread
     debugger->notice("Creating server thread...");
     QThread *serverThread = new QThread;
-    serverThread->setUserData(0, new ThreadId("server"));
+    serverThread->setUserData(0, threadList.at(1).get());
     Server *server = new Server();
     server->setListeningAddress(QLatin1String("127.0.0.1")); //= todo: add to ConfigManager
     server->setListeningPort(4555);                          //=
@@ -88,7 +94,7 @@ int main(int argc, char** argv)
     // Initialize Bot Thread
     debugger->notice("Creating bot thread...");
     QThread *botThread = new QThread;
-    botThread->setUserData(0, new ThreadId("bot"));
+    botThread->setUserData(0, threadList.at(2).get());
     BotManager *botManager = new BotManager();
     botManager->moveToThread(botThread);
     botManager->setOAuthToken(configManager->token());
@@ -113,15 +119,17 @@ int main(int argc, char** argv)
 
     std::cout << "---App: cleaning up and freeing resources..." << std::endl;
 
-    delete a;
+    a.reset();
 
-//    delete botThread;
-//    delete botManager;
-//    delete serverThread;
-//    delete server;
+    //delete botManager;
+    //botThread->quit();
+    //delete server;
+    //serverThread->quit();
 
     delete configManager;
     delete debugger;
+
+    threadList.clear();
 
     std::cout << "---App: exited with status code " << status << std::endl;
 

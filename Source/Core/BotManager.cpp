@@ -12,31 +12,21 @@ BotManager::BotManager(QObject *parent)
 
 BotManager::~BotManager()
 {
-    if (this->m_discord)
-    {
-        delete this->m_discord;
-        this->m_discord = nullptr;
-    }
+    this->m_eventHandler.reset();
+    this->m_discord.reset();
 }
 
 void BotManager::init()
 {
-    this->m_discord = new QDiscord();
-    this->m_eventHandler = new DiscordEventHandler(this->m_discord, this->m_discord);
+    // TODO: move the event handler to its own thread
+    // currently runs on the `main` thread
+    this->m_discord.reset(new QDiscord());
+    this->m_eventHandler.reset(new DiscordEventHandler(this->m_discord.get()));
 
-//    QThread *eventHandlerThread = new QThread;
-//    eventHandlerThread->setUserData(0, new ThreadId("discord"));
-//    this->m_discord->moveToThread(eventHandlerThread);
-//    this->m_eventHandler->moveToThread(eventHandlerThread);
-
-//    QObject::connect(eventHandlerThread, &QThread::started, this->m_discord, &QDiscord::start);
-//    QObject::connect(this->m_discord, &QDiscord::stopped, eventHandlerThread, &QThread::quit);
-//    QObject::connect(this->m_discord, &QDiscord::stopped, this->m_discord, &QDiscord::deleteLater);
-//    QObject::connect(eventHandlerThread, &QThread::finished, eventHandlerThread, &QThread::deleteLater);
-
-    QObject::connect(this->m_discord, &QDiscord::loginSuccess, this, &BotManager::loginSuccess);
-    QObject::connect(this->m_discord, &QDiscord::loginFailed, this, &BotManager::loginFailed);
-    QObject::connect(this->m_discord, &QDiscord::loggedOut, this, &BotManager::loggedOut);
+    QObject::connect(this->m_discord.get(), &QDiscord::loginSuccess, this, &BotManager::loginSuccess);
+    QObject::connect(this->m_discord.get(), &QDiscord::loginFailed, this, &BotManager::loginFailed);
+    QObject::connect(this->m_discord.get(), &QDiscord::loggedOut, this, &BotManager::loggedOut);
+    QObject::connect(this->m_discord.get(), &QDiscord::disconnected, this, &BotManager::disconnected);
 }
 
 void BotManager::setOAuthToken(const QString &token)
@@ -81,4 +71,11 @@ void BotManager::loggedOut()
 {
     debugger->notice("BotManager: logged out");
     emit notify(LoggedOut);
+}
+
+void BotManager::disconnected()
+{
+    debugger->notice("BotManager: WebSocket closed by host. Session no longer valid or other network error");
+    debugger->notice("BotManager: Reconnecting...");
+    emit notify(Disconnected);
 }

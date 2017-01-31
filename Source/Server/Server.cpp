@@ -6,7 +6,7 @@
 Server::Server(QObject *parent)
     : QObject(parent)
 {
-    this->m_httpServerSettings = new QtWebApp::HttpServerSettings;
+    this->m_httpServerSettings.reset(new QtWebApp::HttpServerSettings);
 
     this->m_configured = true;
 }
@@ -23,11 +23,9 @@ Server::Server(const QLatin1String &listeningAddress, quint16 listeningPort, QOb
 
 Server::~Server()
 {
-    if (this->m_httpServerSettings)
-    {
-        delete this->m_httpServerSettings;
-        this->m_httpServerSettings = nullptr;
-    }
+    this->m_httpServerSettings.reset();
+    this->m_requestMapper.reset();
+    this->m_httpListener.reset();
 }
 
 void Server::setListeningAddress(const QLatin1String &address)
@@ -84,8 +82,8 @@ void Server::p_startPrivate()
 
     if (!this->m_httpListener && !this->m_requestMapper)
     {
-        this->m_requestMapper = new RequestMapper(this);
-        this->m_httpListener = new HttpListener(this->m_httpServerSettings, this->m_requestMapper, this);
+        this->m_requestMapper.reset(new RequestMapper(this));
+        this->m_httpListener.reset(new HttpListener(this->m_httpServerSettings.get(), this->m_requestMapper.get(), this));
         debugger->notice("Server: started");
     }
 
@@ -116,12 +114,10 @@ void Server::p_stopPrivate()
 
     if (this->m_httpListener && this->m_requestMapper)
     {
-        this->m_httpListener->close();
-        delete this->m_httpListener;
-        this->m_httpListener = nullptr;
+        this->m_requestMapper.reset();
 
-        delete this->m_requestMapper;
-        this->m_requestMapper = nullptr;
+        this->m_httpListener->close();
+        this->m_httpListener.reset();
 
         debugger->notice("Server: stopped");
     }

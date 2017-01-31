@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QDiscord>
 
+#include <memory>
+
 #include "DiscordEventHandler.hpp"
 
 class BotManager : public QObject
@@ -16,7 +18,8 @@ public:
 
     enum NotifyCode : quint8 {
         LoginSuccess = 0,
-        LoggedOut
+        LoggedOut,
+        Disconnected
     };
 
     enum ErrorCode : quint8 {
@@ -37,6 +40,7 @@ private slots:
     void loginSuccess();
     void loginFailed();
     void loggedOut();
+    void disconnected();
 
 signals:
     void notify(NotifyCode);
@@ -45,8 +49,8 @@ signals:
     void stopped();
 
 private:
-    QDiscord *m_discord = nullptr;
-    DiscordEventHandler *m_eventHandler = nullptr;
+    std::unique_ptr<QDiscord> m_discord;
+    std::unique_ptr<DiscordEventHandler> m_eventHandler;
 
     QString m_token;
 };

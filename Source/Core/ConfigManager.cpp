@@ -62,14 +62,14 @@ bool ConfigManager::isValid() const
 
 void ConfigManager::loadConfig()
 {
-    this->m_configFile = new QFile(this->m_configFilePath);
+    this->m_configFile.reset(new QFile(this->m_configFilePath));
 
     if (this->m_configFile->exists())
     {
         if (this->m_configFile->open(QFile::ReadWrite))
         {
             std::cerr << "ConfigManager: reading from settings.bin" << std::endl;
-            this->m_configStream.setDevice(this->m_configFile);
+            this->m_configStream.setDevice(this->m_configFile.get());
 
             this->m_configStream >> this->m_cfgHeader;
 
@@ -100,7 +100,7 @@ void ConfigManager::loadConfig()
 
     else
     {
-        this->p_resetStream(true);
+        this->p_resetStream();
 
         this->resetConfig();
         this->saveConfig();
@@ -123,7 +123,7 @@ void ConfigManager::resetConfig()
 
 void ConfigManager::saveConfig()
 {
-    this->m_configFile = new QFile(this->m_configFilePath);
+    this->m_configFile.reset(new QFile(this->m_configFilePath));
 
     if (this->m_configFile->exists())
     {
@@ -133,7 +133,7 @@ void ConfigManager::saveConfig()
     if (this->m_configFile->open(QFile::WriteOnly))
     {
         std::cerr << "ConfigManager: saving to settings.bin" << std::endl;
-        this->m_configStream.setDevice(this->m_configFile);
+        this->m_configStream.setDevice(this->m_configFile.get());
 
         this->m_configStream << this->m_cfgHeader;
         this->m_configStream << this->m_cfgVersion;
@@ -215,13 +215,12 @@ const QList<quint64> &ConfigManager::joinedGuilds() const
     return this->m_cfgJoinedGuilds;
 }
 
-void ConfigManager::p_resetStream(bool force)
+void ConfigManager::p_resetStream()
 {
-    if (this->m_configFile || force)
+    if (this->m_configFile)
     {
         this->m_configFile->close();
-        delete this->m_configFile;
-        this->m_configFile = nullptr;
+        this->m_configFile.reset();
     }
 
     this->m_configStream.setDevice(0);
