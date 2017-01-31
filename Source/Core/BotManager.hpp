@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QDiscord>
 
+#include "DiscordEventHandler.hpp"
+
 class BotManager : public QObject
 {
     Q_OBJECT
@@ -44,6 +46,7 @@ signals:
 
 private:
     QDiscord *m_discord = nullptr;
+    DiscordEventHandler *m_eventHandler = nullptr;
 
     QString m_token;
 };
