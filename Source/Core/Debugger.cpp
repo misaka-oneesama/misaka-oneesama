@@ -82,13 +82,12 @@ void Debugger::setEnabled(bool enabled)
 
     if (this->m_enabled)
     {
-        QFileInfoList logs = this->m_logDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
-        if (logs.count() > this->m_maxLogFiles)
+        QFileInfoList logs = this->m_logDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+        if (logs.count() >= this->m_maxLogFiles)
         {
-            // FIXME: something is wrong here
-            for (int i = 0; i < logs.count() - this->m_maxLogFiles + 1; i++)
+            for (int i = 0; i < logs.count() - this->m_maxLogFiles; i++)
             {
-                //std::cout << qUtf8Printable(logs.at(i).absoluteFilePath()) << std::endl;
+                std::cout << "Old log file removed: " << qUtf8Printable(logs.at(i).absoluteFilePath()) << std::endl;
                 QFile::remove(logs.at(i).absoluteFilePath());
             }
         }
@@ -130,78 +129,60 @@ void Debugger::printToTerminal(bool enabled)
 
 void Debugger::notice(const QString &message)
 {
-    QMutexLocker(&this->m_mutex);
-
-    QString threadName = QThread::currentThread()->userData(0)
-                       ? static_cast<ThreadId*>(QThread::currentThread()->userData(0))->getNamedId()
-                       : QString("0x%1").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()),
-                                             QT_POINTER_SIZE * 2, 16, QChar('0'));
-
-    if (this->m_printToTerminal)
-    {
-        std::cerr << qUtf8Printable(message) << std::endl;
-    }
-
-    if (this->m_valid && this->m_enabled)
-    {
-        this->m_logStream << QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss") << " | "
-                          << "(thread " << threadName << ") "
-                          << message << "\n";
-        this->m_logStream.flush();
-        this->m_logFile->flush();
-    }
-
-    threadName.clear();
+    this->log(message, Notice);
 }
 
 void Debugger::warning(const QString &message)
 {
-    QMutexLocker(&this->m_mutex);
-
-    QString threadName = QThread::currentThread()->userData(0)
-                       ? static_cast<ThreadId*>(QThread::currentThread()->userData(0))->getNamedId()
-                       : QString("0x%1").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()),
-                                             QT_POINTER_SIZE * 2, 16, QChar('0'));
-
-    if (this->m_printToTerminal)
-    {
-        std::cerr << "WARNING! " << qUtf8Printable(message) << std::endl;
-    }
-
-    if (this->m_valid && this->m_enabled)
-    {
-        this->m_logStream << QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss") << " | "
-                          << "(thread " << threadName << ") "
-                          << "WARNING! " << message << "\n";
-        this->m_logStream.flush();
-        this->m_logFile->flush();
-    }
-
-    threadName.clear();
+    this->log(message, Warning);
 }
 
 void Debugger::error(const QString &message)
 {
+    this->log(message, Error);
+}
+
+void Debugger::log(const QString &message, MessageType type)
+{
     QMutexLocker(&this->m_mutex);
 
-    QString threadName = QThread::currentThread()->userData(0)
-                       ? static_cast<ThreadId*>(QThread::currentThread()->userData(0))->getNamedId()
-                       : QString("0x%1").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()),
-                                             QT_POINTER_SIZE * 2, 16, QChar('0'));
+    QString formated = message;
+
+    switch (type)
+    {
+        case Notice:
+            break;
+
+        case Warning:
+            formated.prepend("⚠ WARNING! ─ ");
+            break;
+
+        case Error:
+            formated.prepend(">ERROR! ─ ");
+            break;
+    }
 
     if (this->m_printToTerminal)
     {
-        std::cerr << "ERROR! " << qUtf8Printable(message) << std::endl;
+        std::cerr << qUtf8Printable(formated) << std::endl;
     }
 
     if (this->m_valid && this->m_enabled)
     {
         this->m_logStream << QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss") << " | "
-                          << "(thread " << threadName << ") "
-                          << "ERROR! " << message << "\n";
+                          << "@thread " << this->currentThreadName() << " | "
+                          << formated << "\n";
         this->m_logStream.flush();
         this->m_logFile->flush();
     }
 
-    threadName.clear();
+    formated.clear();
+}
+
+QString Debugger::currentThreadName()
+{
+    return QThread::currentThread()->userData(0)
+         ? static_cast<ThreadId*>(QThread::currentThread()->userData(0))->getNamedId()
+         : QString("0x%1").arg(reinterpret_cast<quintptr>(QThread::currentThreadId()),
+                               QT_POINTER_SIZE * 2, 16, QChar('0'));
 }

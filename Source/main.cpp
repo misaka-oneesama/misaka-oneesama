@@ -104,6 +104,8 @@ int main(int argc, char** argv)
     botThread->start();
     debugger->notice("Bot thread started.");
 
+    debugger->notice("All threads started.");
+
     // notice: segfauls on termination using UNIX signal
     // fixme: implement a proper event loop for the code in here
 

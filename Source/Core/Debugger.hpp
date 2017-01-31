@@ -36,7 +36,16 @@ private:
 
     bool m_valid = false;
     bool m_enabled = false;
-    quint16 m_maxLogFiles = 5;
+    quint16 m_maxLogFiles = 5; // +1 for the newly created one (means a total of 6 log files)
+
+    enum MessageType : quint8 {
+        Notice = 0,
+        Warning,
+        Error
+    };
+
+    void log(const QString &message, MessageType);
+    static QString currentThreadName();
 };
 
 #endif // DEBUGGER_HPP
