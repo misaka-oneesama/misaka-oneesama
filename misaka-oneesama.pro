@@ -1,4 +1,4 @@
-QT += core network websockets
+QT += core network websockets dbus
 QT -= gui
 
 CONFIG += c++14

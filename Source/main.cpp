@@ -26,7 +26,88 @@ void terminate(int)
 }
 #endif
 
-int main(int argc, char** argv)
+#include <QDBusInterface>
+#include <QDBusServiceWatcher>
+#include <QDBusAbstractAdaptor>
+#include <QDBusVariant>
+#include <QProcess>
+const QString dbus_service_name = "moe.misaka-oneesama.discordbot";
+
+int main(int argc, char **argv)
+{
+    a.reset(new QCoreApplication(argc, argv));
+    a->setApplicationName(QString::fromUtf8("御坂ーお姉さま"));
+    a->setApplicationVersion(QLatin1String("v0.0.1"));
+    a->setOrganizationName(QString::fromUtf8("マギルゥーベルベット"));
+    a->setOrganizationDomain(QLatin1String("magiruuvelvet.gdn"));
+
+    if (!QDBusConnection::sessionBus().isConnected()){}
+
+    // Initialize configuration
+    std::cout << "---App: creating [class] ConfigManager..." << std::endl;
+    configManager = new ConfigManager();
+    configManager->loadConfig();
+
+     /// JUST FOR DEVELOPMENT =========================================================================================
+      // MUST be a bot token, don't run this bot on a user account, note: QDiscord rejects user tokens anyway ;P
+      QFile tokenFile(configManager->configPath() + "/token");
+      if (tokenFile.exists() && tokenFile.open(QFile::ReadOnly | QFile::Text))
+      {
+          // create a file in "$config_path/token" and paste your bots token here
+          // file MUST NOT END WITH A NEWLINE and MUST BE UTF-8 ENCODED!!!
+          configManager->setOAuthToken(tokenFile.readAll().constData());
+          tokenFile.close();
+      }
+     ///===============================================================================================================
+
+    // Initialize debugger
+    std::cout << "---App: creating [class] Debugger..." << std::endl;
+    debugger = new Debugger();
+    debugger->setMaxLogFilesToKeep(configManager->maxLogFilesToKeep());
+    debugger->setLogDir(configManager->configPath() + "/logs");
+    debugger->setEnabled(false);
+    debugger->printToTerminal(configManager->debuggerPrintToTerminal()); // true for debug builds, false otherwise
+
+
+    if (a->arguments().size() == 1)
+    {
+        std::cout << "master process started" << std::endl;
+        QDBusServiceWatcher serviceWatcher(dbus_service_name, QDBusConnection::sessionBus(), QDBusServiceWatcher::WatchForRegistration);
+
+        //QObject::connect(&serviceWatcher, &QDBusServiceWatcher::serviceRegistered, );
+        QProcess *server = new QProcess(a.get());
+        server->setStandardOutputFile("./misakaoneesama_server.log");
+        server->setStandardErrorFile("./misakaoneesama-server-err.log");
+        server->start(a->arguments().at(0), QStringList("server"), QProcess::ReadOnly);
+
+        QProcess *bot = new QProcess(a.get());
+        bot->setStandardOutputFile("./misakaoneesama_bot.log");
+        bot->setStandardErrorFile("./misakaoneesama-bot-err.log");
+        bot->start(a->arguments().at(0), QStringList("bot"), QProcess::ReadOnly);
+    }
+
+    else if (a->arguments().at(1) == "server")
+    {
+        std::cout << "server process started" << std::endl;
+        Server *server = new Server();
+        server->setListeningAddress(QLatin1String("127.0.0.1"));
+        server->setListeningPort(4555);
+        QTimer::singleShot(0, server, &Server::start);
+    }
+
+    else if (a->arguments().at(1) == "bot")
+    {
+        std::cout << "bot process started" << std::endl;
+        BotManager *botManager = new BotManager();
+        botManager->setOAuthToken(configManager->token());
+        botManager->init();
+        QTimer::singleShot(0, botManager, static_cast<void(BotManager::*)()>(&BotManager::login));
+    }
+
+    return a->exec();
+}
+
+int _main(int argc, char **argv)
 {
     a.reset(new QCoreApplication(argc, argv));
     a->setApplicationName(QString::fromUtf8("御坂ーお姉さま"));

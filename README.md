@@ -49,6 +49,20 @@ All Qt supported platforms should be supported. Originally this is a personal bo
 
 ## Testing
 
+**Branch:** `ipc-dbus-testing`
+
+**Overview:**
+
+Instead of multithreading all components in one process I decided to try something with IPC instead. I want to have at least 3 separate processes - the `master` process which acts as controller and observer, the `server` process which handles all HTTP requests and operates the Web UI, and the `bot` process which is the actual Discord™ bot.
+
+I also plan to give D-Bus a try to communicate between the processes.
+
+##### What works?
+
+**`A:`** Just the self spawning to create the other 2 processes. Otherwise, nothing yet.
+
+--
+
 After running the bot, its Web UI can be accessed using [http://127.0.0.1:4555/](http://127.0.0.1:4555/) (default configuration). There are multiple threads and the bot is capable of handling requests and responses from both, HTTP and Discord™ WebSockets.
 
 At the moment there isn't anything interesting served over HTTP. Just some string saying `It's working :D` or a 404 error message on any other requested path. Discord events are processed in real-time and QDiscord supports quite some events already to make a useful bot.
