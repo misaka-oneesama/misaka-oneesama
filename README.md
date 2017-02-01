@@ -24,13 +24,15 @@ I plan to develop some plugins by myself to use with the bot.
 
 This are the requirements and dependencies which are required to build and operate the bot. Those may be subject to change during development.
 
+ - Linux, \*BSD (FreeBSD), macOS or any other UNIX like system <br>
+   <sup>Cygwin on Windows may work too (untested and not recommended)</sup>
  - UTF-8 compatible system environment and file system (**important!**)
    - This software makes use of UTF-8 characters in both, runtime and file system I/O
  - C++14 compiler
- - Any Qt supported Operating System (Linux, \*BSD, macOS, Windows, etc.)
 
  - [Qt](https://www.qt.io) 5.6+ (lower versions may work too, but not recommended)
    - Qt Core
+   - Qt D-Bus ─ for the Interprocess communication (IPC)
    - Qt Network ─ for the HTTP server which operates the Web UI
    - Qt WebSockets ─ for the Discord API communication
 
@@ -44,7 +46,7 @@ This are the requirements and dependencies which are required to build and opera
 
 ##### Note about Support Platforms
 
-All Qt supported platforms should be supported. Originally this is a personal bot and it needs to work mainly on FreeBSD only, which is the OS of my choice for servers. If there are any issues on the OS of your choice feel free to fix it yourself and make a *pull request* or open an issue and let me know.
+All Qt supported UNIX like platforms should be supported. Originally this is a personal bot and it needs to work mainly on FreeBSD only, which is the OS of my choice for servers. If there are any issues on other OSes feel free to fix it yourself and make a *pull request* or open an issue and let me know. Also please don't ask for Windows support, thanks.
 
 
 ## Testing
@@ -59,24 +61,30 @@ I also plan to give D-Bus a try to communicate between the processes.
 
 ##### What works?
 
-**`A:`** Just the self spawning to create the other 2 processes. Otherwise, nothing yet.
+**`A:`** The self spawning to create the other 2 instances as well as transferring the configuration to the child processes so that is loads only once during the initial startup. All components work and operate normally, but there isn't any communication yet between the childs. The master process detects when a child crashes but it doesn't respawn it yet. Sending SIGINT, SIGTERM or SIGQUIT to any of the child processes stops them after some cleanup work. Sending any of this signals to the master process stops any child processes (cleanup work is done first) and then it stops itself and finishes with the cleanup. SIGKILL is evil, but the app can be restarted without any critical problems so far. This changes in the future when I need more complex locks (`QSystemSemaphore`).
 
 --
 
-After running the bot, its Web UI can be accessed using [http://127.0.0.1:4555/](http://127.0.0.1:4555/) (default configuration). There are multiple threads and the bot is capable of handling requests and responses from both, HTTP and Discord™ WebSockets.
+After running the bot, its Web UI can be accessed using [http://127.0.0.1:4555/](http://127.0.0.1:4555/) (default configuration). There are multiple processes. The server instance which handles HTTP requests and responses, the bot instance which communicates with the Discord™ API over WebSockets and then there is the master process which glues everything together.
 
-At the moment there isn't anything interesting served over HTTP. Just some string saying `It's working :D` or a 404 error message on any other requested path. Discord events are processed in real-time and QDiscord supports quite some events already to make a useful bot.
+At the moment there isn't anything interesting served over HTTP. Just some string saying `It's working :D` or an attempt to serve a file from the home directory on any other requested path. Discord events are processed in real-time and QDiscord supports quite some events already to make a useful bot.
 
 To see everything in action make sure to run the bot from within a terminal.
 
+Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$HOME/.config/御坂ーお姉さま/logs`).
 
 ## TODO list
 
  - [ ] Implement Bot Core
    - [x] Discord login and WebSocket communication
    - [ ] Implement a event handler for all the different Discord events
- - [ ] Implement a solid multithreaded environment **[QThread and Signal/Slots]**
-   - [x] Handle UNIX signals (use C preprocessor to exclude Windows)
+ - [ ] ~~Implement a solid multithreaded environment **[QThread and Signal/Slots]**~~ <br>
+       Implement a solid IPC environment which communicates over D-Bus
+     - [x] Basic Process Manager
+     - [ ] D-Bus interfaces
+     - [ ] Error handling and process respawning
+     - [ ] Testing if everything works...
+   - [x] Handle UNIX signals ~~(use C preprocessor to exclude Windows)~~
  - [x] Implement basic HTTP server
    - [x] Improve QtWebApp (`HttpServer` module)
      - [x] use alternative config store [`QSettings` spams unnecessary useless files to disk]
