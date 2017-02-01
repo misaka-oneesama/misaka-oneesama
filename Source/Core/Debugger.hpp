@@ -12,13 +12,14 @@
 class Debugger
 {
 public:
-    Debugger();
+    Debugger(bool output = true);
     Debugger(const QString &logDir);
     Debugger(const QString &logDir, bool enabled);
     ~Debugger();
 
     bool setLogDir(const QString &logDir);
     void setEnabled(bool);
+    void setFilenamePrefix(const QString &prefix);
     void setMaxLogFilesToKeep(quint16);
 
     void printToTerminal(bool);
@@ -28,6 +29,7 @@ public:
     void error(const QString&);
 
 private:
+    bool m_output = true;
     QDir m_logDir;
     std::unique_ptr<QFile> m_logFile;
     QTextStream m_logStream;
@@ -38,6 +40,7 @@ private:
 
     bool m_valid = false;
     bool m_enabled = false;
+    QString m_prefix;
     quint16 m_maxLogFiles = 5; // +1 for the newly created one (means a total of 6 log files)
 
     enum MessageType : quint8 {

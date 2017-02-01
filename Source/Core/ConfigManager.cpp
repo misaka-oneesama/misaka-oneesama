@@ -12,8 +12,9 @@
 #define MISAKA_CONFIG_FILENAME "/settings.bin"
 #endif
 
-ConfigManager::ConfigManager()
+ConfigManager::ConfigManager(bool output)
     : m_valid(false)
+    , m_output(output)
 {
     const QString cfgBasePath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
     this->m_configPath = cfgBasePath + '/' + qApp->applicationName();
@@ -22,13 +23,15 @@ ConfigManager::ConfigManager()
     if (QDir(cfgBasePath).mkdir(qApp->applicationName()) ||
         QDir(this->m_configPath).exists())
     {
-        std::cerr << "ConfigManager: configuration directory found" << std::endl;
+        if (this->m_output)
+            std::cerr << "ConfigManager: configuration directory found" << std::endl;
         this->m_valid = true;
     }
 
     else
     {
-        std::cerr << "ConfigManager: unable to create or access the configuration directory" << std::endl;
+        if (this->m_output)
+            std::cerr << "ConfigManager: unable to create or access the configuration directory" << std::endl;
     }
 
     // set file header
@@ -68,15 +71,19 @@ void ConfigManager::loadConfig()
     {
         if (this->m_configFile->open(QFile::ReadWrite))
         {
-            std::cerr << "ConfigManager: reading from settings.bin" << std::endl;
+            if (this->m_output)
+                std::cerr << "ConfigManager: reading from settings.bin" << std::endl;
             this->m_configStream.setDevice(this->m_configFile.get());
 
             this->m_configStream >> this->m_cfgHeader;
 
             if (this->m_cfgHeader != QLatin1String("misaka-cfg"))
             {
-                std::cerr << "ConfigManager: not a valid configuration file" << std::endl;
-                std::cerr << "ConfigManager: [WARNING] using default configuration" << std::endl;
+                if (this->m_output)
+                {
+                    std::cerr << "ConfigManager: not a valid configuration file" << std::endl;
+                    std::cerr << "ConfigManager: [WARNING] using default configuration" << std::endl;
+                }
 
                 this->resetConfig();
                 this->p_resetStream();
@@ -93,8 +100,11 @@ void ConfigManager::loadConfig()
 
         else
         {
-            std::cerr << "ConfigManager: unable to read from or write to settings.bin" << std::endl;
-            std::cerr << "ConfigManager: current configuration hasn't been changed" << std::endl;
+            if (this->m_output)
+            {
+                std::cerr << "ConfigManager: unable to read from or write to settings.bin" << std::endl;
+                std::cerr << "ConfigManager: current configuration hasn't been changed" << std::endl;
+            }
         }
     }
 
@@ -132,7 +142,8 @@ void ConfigManager::saveConfig()
 
     if (this->m_configFile->open(QFile::WriteOnly))
     {
-        std::cerr << "ConfigManager: saving to settings.bin" << std::endl;
+        if (this->m_output)
+            std::cerr << "ConfigManager: saving to settings.bin" << std::endl;
         this->m_configStream.setDevice(this->m_configFile.get());
 
         this->m_configStream << this->m_cfgHeader;
@@ -148,8 +159,11 @@ void ConfigManager::saveConfig()
 
     else
     {
-        std::cerr << "ConfigManager: unable to write to settings.bin" << std::endl;
-        std::cerr << "ConfigManager: current configuration hasn't been saved" << std::endl;
+        if (this->m_output)
+        {
+            std::cerr << "ConfigManager: unable to write to settings.bin" << std::endl;
+            std::cerr << "ConfigManager: current configuration hasn't been saved" << std::endl;
+        }
     }
 
     this->p_resetStream();

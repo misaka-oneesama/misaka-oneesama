@@ -10,7 +10,7 @@
 class ConfigManager
 {
 public:
-    ConfigManager();
+    ConfigManager(bool output = true);
     ~ConfigManager();
 
     // Checks if the config manager can read/write the configuration directory
@@ -50,6 +50,7 @@ public:
 
 private:
     bool m_valid = false;
+    bool m_output = true;
     QString m_configPath;
     QString m_configFilePath;
 

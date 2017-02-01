@@ -13,7 +13,8 @@
 
 #include <iostream>
 
-Debugger::Debugger()
+Debugger::Debugger(bool output)
+    : m_output(output)
 {
 }
 
@@ -51,7 +52,8 @@ bool Debugger::setLogDir(const QString &logDir)
         {
             if (parent.mkdir(this->m_logDir.dirName()))
             {
-                std::cerr << "Debugger: log directory created" << std::endl;
+                if (this->m_output)
+                    std::cerr << "Debugger: log directory created" << std::endl;
                 this->m_valid = true;
             }
         }
@@ -64,12 +66,14 @@ bool Debugger::setLogDir(const QString &logDir)
 
     if (this->m_valid)
     {
-        std::cerr << "Debugger: log directory set to '" << qUtf8Printable(this->m_logDir.absolutePath()) << "'" << std::endl;
+        if (this->m_output)
+            std::cerr << "Debugger: log directory set to '" << qUtf8Printable(this->m_logDir.absolutePath()) << "'" << std::endl;
     }
 
     else
     {
-        std::cerr << "Debugger: given log directory is not valid: " << qUtf8Printable(this->m_logDir.absolutePath()) << std::endl;
+        if (this->m_output)
+            std::cerr << "Debugger: given log directory is not valid: " << qUtf8Printable(this->m_logDir.absolutePath()) << std::endl;
     }
 
     return this->m_valid;
@@ -81,7 +85,7 @@ void Debugger::setEnabled(bool enabled)
 
     if (this->m_enabled)
     {
-        QFileInfoList logs = this->m_logDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+        QFileInfoList logs = this->m_logDir.entryInfoList(QStringList(this->m_prefix + '*'), QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
         if (logs.count() >= this->m_maxLogFiles)
         {
             for (int i = 0; i < logs.count() - this->m_maxLogFiles; i++)
@@ -91,7 +95,8 @@ void Debugger::setEnabled(bool enabled)
             }
         }
 
-        this->m_logFile.reset(new QFile(this->m_logDir.absolutePath() + '/' + QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd--hh-mm-ss") + ".log"));
+        this->m_logFile.reset(new QFile(this->m_logDir.absolutePath() + '/' +
+                                        this->m_prefix + QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd--hh-mm-ss") + ".log"));
         if (this->m_logFile->open(QFile::WriteOnly | QFile::Text))
         {
             this->m_logStream.setDevice(this->m_logFile.get());
@@ -113,6 +118,11 @@ void Debugger::setEnabled(bool enabled)
             std::cerr << "Debugger: unable to create log file" << std::endl;
         }
     }
+}
+
+void Debugger::setFilenamePrefix(const QString &prefix)
+{
+    prefix.isEmpty() ? this->m_prefix = prefix : this->m_prefix = prefix + '-';
 }
 
 void Debugger::setMaxLogFilesToKeep(quint16 c)

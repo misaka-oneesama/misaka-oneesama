@@ -4,9 +4,9 @@
 #include "Core/Debugger.hpp"
 #include "Core/ConfigManager.hpp"
 
-#include "Core/ThreadId.hpp"
-
 extern Debugger *debugger;
 extern ConfigManager *configManager;
+
+extern const QString dbus_service_name;
 
 #endif // GLOBAL_HPP
