@@ -65,6 +65,8 @@ bool ConfigManager::isValid() const
 
 void ConfigManager::loadConfig()
 {
+    QMutexLocker(&this->m_mutex);
+
     this->m_configFile.reset(new QFile(this->m_configFilePath));
 
     if (this->m_configFile->exists())
@@ -119,6 +121,8 @@ void ConfigManager::loadConfig()
 
 void ConfigManager::resetConfig()
 {
+    QMutexLocker(&this->m_mutex);
+
     this->m_cfgHeader = QLatin1String("misaka-cfg");
     this->m_cfgVersion = 0x00000100;
 
@@ -133,6 +137,8 @@ void ConfigManager::resetConfig()
 
 void ConfigManager::saveConfig()
 {
+    QMutexLocker(&this->m_mutex);
+
     this->m_configFile.reset(new QFile(this->m_configFilePath));
 
     if (this->m_configFile->exists())
@@ -176,6 +182,7 @@ const QString &ConfigManager::configPath() const
 
 void ConfigManager::setMaxLogFilesToKeep(quint16 max)
 {
+    QMutexLocker(&this->m_mutex);
     this->m_cfgMaxLogFilesToKeep = max;
 }
 
@@ -186,6 +193,7 @@ quint16 ConfigManager::maxLogFilesToKeep() const
 
 void ConfigManager::setDebuggerPrintToTerminal(bool enabled)
 {
+    QMutexLocker(&this->m_mutex);
     this->m_cfgDebuggerPrintToTerminal = enabled;
 }
 
@@ -196,6 +204,7 @@ bool ConfigManager::debuggerPrintToTerminal() const
 
 void ConfigManager::setOAuthToken(const QString &token)
 {
+    QMutexLocker(&this->m_mutex);
     this->m_cfgOAuthToken = token;
 }
 
@@ -206,11 +215,14 @@ const QString &ConfigManager::token() const
 
 void ConfigManager::setJoinedGuilds(const QList<quint64> &guildIds)
 {
+    QMutexLocker(&this->m_mutex);
     this->m_cfgJoinedGuilds = guildIds;
 }
 
 void ConfigManager::addJoinedGuild(const quint64 &guildId)
 {
+    QMutexLocker(&this->m_mutex);
+
     if (!this->m_cfgJoinedGuilds.contains(guildId))
     {
         this->m_cfgJoinedGuilds.append(guildId);
@@ -219,6 +231,8 @@ void ConfigManager::addJoinedGuild(const quint64 &guildId)
 
 void ConfigManager::removeJoinedGuild(const quint64 &guildId)
 {
+    QMutexLocker(&this->m_mutex);
+
     // there should be only one occurrence of guildId in the list
     // threrefore `removeOne` is faster than `removeAll`
     this->m_cfgJoinedGuilds.removeOne(guildId);
@@ -231,6 +245,8 @@ const QList<quint64> &ConfigManager::joinedGuilds() const
 
 void ConfigManager::p_resetStream()
 {
+    QMutexLocker(&this->m_mutex);
+
     if (this->m_configFile)
     {
         this->m_configFile->close();

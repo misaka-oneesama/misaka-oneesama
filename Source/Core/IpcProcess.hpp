@@ -48,7 +48,6 @@ public slots:
 private:
     QMutex m_mutex;
     InstanceType m_id = InstanceType::Master;
-    bool m_redirectOutput = false;
 };
 
 #endif // IPCPROCESS_HPP

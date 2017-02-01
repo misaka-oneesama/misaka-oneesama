@@ -43,6 +43,8 @@ Debugger::~Debugger()
 
 bool Debugger::setLogDir(const QString &logDir)
 {
+    QMutexLocker(&this->m_mutex);
+
     this->m_logDir = QDir(logDir);
 
     if (!this->m_logDir.exists())
@@ -53,7 +55,10 @@ bool Debugger::setLogDir(const QString &logDir)
             if (parent.mkdir(this->m_logDir.dirName()))
             {
                 if (this->m_output)
+                {
                     std::cerr << "Debugger: log directory created" << std::endl;
+                }
+
                 this->m_valid = true;
             }
         }
@@ -67,13 +72,17 @@ bool Debugger::setLogDir(const QString &logDir)
     if (this->m_valid)
     {
         if (this->m_output)
+        {
             std::cerr << "Debugger: log directory set to '" << qUtf8Printable(this->m_logDir.absolutePath()) << "'" << std::endl;
+        }
     }
 
     else
     {
         if (this->m_output)
+        {
             std::cerr << "Debugger: given log directory is not valid: " << qUtf8Printable(this->m_logDir.absolutePath()) << std::endl;
+        }
     }
 
     return this->m_valid;
@@ -81,6 +90,8 @@ bool Debugger::setLogDir(const QString &logDir)
 
 void Debugger::setEnabled(bool enabled)
 {
+    QMutexLocker(&this->m_mutex);
+
     this->m_enabled = enabled;
 
     if (this->m_enabled)
@@ -122,16 +133,19 @@ void Debugger::setEnabled(bool enabled)
 
 void Debugger::setFilenamePrefix(const QString &prefix)
 {
+    QMutexLocker(&this->m_mutex);
     prefix.isEmpty() ? this->m_prefix = prefix : this->m_prefix = prefix + '-';
 }
 
 void Debugger::setMaxLogFilesToKeep(quint16 c)
 {
+    QMutexLocker(&this->m_mutex);
     this->m_maxLogFiles = c;
 }
 
 void Debugger::printToTerminal(bool enabled)
 {
+    QMutexLocker(&this->m_mutex);
     this->m_printToTerminal = enabled;
 }
 

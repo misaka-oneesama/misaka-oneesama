@@ -1,5 +1,7 @@
 #include "IpcProcess.hpp"
 
+#include <QMetaMethod>
+
 #include <iostream>
 
 #include <Source/Global.hpp>
@@ -7,9 +9,6 @@
 IpcProcess::IpcProcess(QObject *parent)
     : QProcess(parent)
 {
-    QObject::connect(this, &IpcProcess::readyReadStandardOutput, this, &IpcProcess::processStandardOutput);
-    QObject::connect(this, &IpcProcess::readyReadStandardError, this, &IpcProcess::processStandardError);
-
     QObject::connect(this, static_cast<void(IpcProcess::*)(int, IpcProcess::ExitStatus)>(&IpcProcess::finished),
                      this, &IpcProcess::processFinished);
     QObject::connect(this, &IpcProcess::errorOccurred, this, &IpcProcess::handleError);
@@ -21,16 +20,32 @@ IpcProcess::~IpcProcess()
 
 void IpcProcess::setIdentifier(const InstanceType &id)
 {
+    QMutexLocker(&this->m_mutex);
     this->m_id = id;
 }
 
 void IpcProcess::redirectOutput(bool enabled)
 {
-    this->m_redirectOutput = enabled;
+    QMutexLocker(&this->m_mutex);
+
+    if (enabled && !this->isSignalConnected(QMetaMethod::fromSignal(&IpcProcess::readyReadStandardOutput))
+                && !this->isSignalConnected(QMetaMethod::fromSignal(&IpcProcess::readyReadStandardError)))
+    {
+        QObject::connect(this, &IpcProcess::readyReadStandardOutput, this, &IpcProcess::processStandardOutput);
+        QObject::connect(this, &IpcProcess::readyReadStandardError, this, &IpcProcess::processStandardError);
+    }
+
+    else
+    {
+        QObject::disconnect(this, &IpcProcess::readyReadStandardOutput, this, &IpcProcess::processStandardOutput);
+        QObject::disconnect(this, &IpcProcess::readyReadStandardError, this, &IpcProcess::processStandardError);
+    }
 }
 
 void IpcProcess::terminate()
 {
+    QMutexLocker(&this->m_mutex);
+
     debugger->notice(QString("IpcProcess: process %1 received SIGTERM").arg(
                          this->instanceName(this->m_id)));
 
@@ -43,20 +58,14 @@ void IpcProcess::terminate()
 
 void IpcProcess::processStandardOutput()
 {
-    if (this->m_redirectOutput)
-    {
-        QMutexLocker(&this->m_mutex);
-        std::cout << this->instanceName(this->m_id) << ": " << this->readAllStandardOutput().constData() << std::flush;
-    }
+    QMutexLocker(&this->m_mutex);
+    std::cout << this->instanceName(this->m_id) << ": " << this->readAllStandardOutput().constData() << std::flush;
 }
 
 void IpcProcess::processStandardError()
 {
-    if (this->m_redirectOutput)
-    {
-        QMutexLocker(&this->m_mutex);
-        std::cerr << this->instanceName(this->m_id) << ": " << this->readAllStandardError().constData() << std::flush;
-    }
+    QMutexLocker(&this->m_mutex);
+    std::cerr << this->instanceName(this->m_id) << ": " << this->readAllStandardError().constData() << std::flush;
 }
 
 void IpcProcess::processFinished(int exitCode, QProcess::ExitStatus status)

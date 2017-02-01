@@ -4,6 +4,8 @@
 #include <QString>
 #include <QFile>
 #include <QDataStream>
+#include <QMutexLocker>
+#include <QMutex>
 
 #include <memory>
 
@@ -51,6 +53,7 @@ public:
 private:
     bool m_valid = false;
     bool m_output = true;
+    QMutex m_mutex;
     QString m_configPath;
     QString m_configFilePath;
 
