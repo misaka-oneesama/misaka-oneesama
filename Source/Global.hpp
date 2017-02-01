@@ -8,15 +8,15 @@
 #include "Server/Server.hpp"
 #include "Core/BotManager.hpp"
 
-extern Debugger *debugger;
-extern ConfigManager *configManager;
+extern Debugger *debugger;              // can be used in every instance (unique)
+extern ConfigManager *configManager;    // can ONLY be used in the [Master] instance
 
-extern IpcProcess *ipcServer;
-extern IpcProcess *ipcBot;
+extern IpcProcess *ipcServer;           // [Master] only
+extern IpcProcess *ipcBot;              // [Master] only
 
-extern Server *server;
-extern BotManager *botManager;
+extern Server *server;                  // [Server] only
+extern BotManager *botManager;          // [Bot] only
 
-extern const QString dbus_service_name;
+extern const QString dbus_service_name; // every instance
 
 #endif // GLOBAL_HPP

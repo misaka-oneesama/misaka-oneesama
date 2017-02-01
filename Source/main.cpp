@@ -10,6 +10,7 @@
 #include <iostream>
 #include <csignal>
 #include <memory>
+#include <cstdio>
 
 /// temporarily included
 #include <QFile>
@@ -95,36 +96,58 @@ int main(int argc, char **argv)
     signal(SIGTERM, terminate);
     signal(SIGQUIT, terminate);
 
-    // Initialize configuration
-    if (!silent)
-        std::cout << "---App: creating [class] ConfigManager..." << std::endl;
-    configManager = new ConfigManager(!silent);
-    configManager->loadConfig();
-
-     /// JUST FOR DEVELOPMENT =========================================================================================
-      // MUST be a bot token, don't run this bot on a user account, note: QDiscord rejects user tokens anyway ;P
-      QFile tokenFile(configManager->configPath() + "/token");
-      if (tokenFile.exists() && tokenFile.open(QFile::ReadOnly | QFile::Text))
-      {
-          // create a file in "$config_path/token" and paste your bots token here
-          // file MUST NOT END WITH A NEWLINE and MUST BE UTF-8 ENCODED!!!
-          configManager->setOAuthToken(tokenFile.readAll().constData());
-          tokenFile.close();
-      }
-     ///===============================================================================================================
-
     // Initialize debugger
     if (!silent)
+    {
         std::cout << "---App: creating [class] Debugger..." << std::endl;
+    }
+
     debugger = new Debugger(!silent);
     debugger->setFilenamePrefix(IpcProcess::instanceName(instance));
-    debugger->setMaxLogFilesToKeep(configManager->maxLogFilesToKeep());
-    debugger->setLogDir(configManager->configPath() + "/logs");
-    debugger->setEnabled(true);
-    debugger->printToTerminal(configManager->debuggerPrintToTerminal()); // true for debug builds, false otherwise
 
     if (instance == IpcProcess::InstanceType::Master)
     {
+        // Initialize configuration
+        if (!silent)
+        {
+            std::cout << "---App: creating [class] ConfigManager..." << std::endl;
+        }
+
+        configManager = new ConfigManager(!silent);
+        configManager->loadConfig();
+
+        debugger->setMaxLogFilesToKeep(configManager->maxLogFilesToKeep());
+        debugger->setLogDir(configManager->configPath() + "/logs");
+        debugger->printToTerminal(configManager->debuggerPrintToTerminal()); // true for debug builds, false otherwise
+        debugger->setEnabled(true);
+
+        // Load the OAuth token from an individual file
+        bool hasToken = false;
+        QFile tokenFile(configManager->configPath() + "/token");
+        if (tokenFile.exists() && tokenFile.open(QFile::ReadOnly | QFile::Text))
+        {
+            // create a file in "$config_path/token" and paste your bots token here
+            // file MUST NOT END WITH A NEWLINE and MUST BE UTF-8 ENCODED!!!
+            configManager->setOAuthToken(tokenFile.readAll().constData());
+            tokenFile.close();
+            hasToken = true;
+        }
+
+        if (!hasToken || configManager->token().isEmpty())
+        {
+            debugger->error("No OAuth token found!");
+            std::cerr << "---App: No OAuth token found!" << "\n\n"
+                      << " Please paste your bot's token in the following file, create it if it doesn't exists." << '\n'
+                      << " --> " << qUtf8Printable(configManager->configPath()) << "/token" << '\n'
+                      << " Make sure the file doesn't end with a new line and is UTF-8 encoded."
+                      << std::endl;
+
+            a.reset();
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
+
         std::cout << "---App: starting master process..." << std::endl;
 
         debugger->notice("Registering D-Bus service...");
@@ -138,7 +161,13 @@ int main(int argc, char **argv)
         QObject::connect(ipcServer, static_cast<void(IpcProcess::*)(int, IpcProcess::ExitStatus)>(&IpcProcess::finished), ipcServer, &IpcProcess::deleteLater);
         QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipcServer, &IpcProcess::terminate);
         QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipcServer, &IpcProcess::deleteLater);
-        ipcServer->start(a->arguments().at(0), QStringList({"--instance=server", "--silent"}), IpcProcess::ReadOnly);
+        ipcServer->start(a->arguments().at(0), QStringList({"--instance=server",
+            "--listen=" + configManager->serverListeningAddress(),
+            "--port=" + QString::number(configManager->serverListeningPort()),
+            "--silent",
+            configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
+            "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
+            "--log-dir=" + debugger->logDir()}), IpcProcess::ReadOnly);
         debugger->notice("IPC: Server instance started.");
 
         debugger->notice("IPC: Starting bot instance...");
@@ -148,17 +177,28 @@ int main(int argc, char **argv)
         QObject::connect(ipcBot, static_cast<void(IpcProcess::*)(int, IpcProcess::ExitStatus)>(&IpcProcess::finished), ipcBot, &IpcProcess::deleteLater);
         QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipcBot, &IpcProcess::terminate);
         QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipcBot, &IpcProcess::deleteLater);
-        ipcBot->start(a->arguments().at(0), QStringList({"--instance=bot", "--silent"}), IpcProcess::ReadOnly);
+        ipcBot->start(a->arguments().at(0), QStringList({"--instance=bot",
+            "--token=" + configManager->token(),
+            "--silent",
+            configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
+            "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
+            "--log-dir=" + debugger->logDir()}), IpcProcess::ReadOnly);
         debugger->notice("IPC: Bot instance started.");
     }
 
     else if (instance == IpcProcess::InstanceType::Server)
     {
         std::cout << "---App: starting server process..." << std::endl;
+        std::fclose(stdin);
+
+        debugger->setMaxLogFilesToKeep(a->arguments().at(6).mid(10).toInt());
+        debugger->setLogDir(a->arguments().at(7).mid(10));
+        debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
+        debugger->setEnabled(true);
 
         server = new Server();
-        server->setListeningAddress(QLatin1String("127.0.0.1"));
-        server->setListeningPort(4555);
+        server->setListeningAddress(a->arguments().at(2).mid(9));
+        server->setListeningPort(a->arguments().at(3).mid(7).toInt());
         //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, server, &Server::stop);
         QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
         QTimer::singleShot(0, server, &Server::start);
@@ -167,9 +207,15 @@ int main(int argc, char **argv)
     else if (instance == IpcProcess::InstanceType::Bot)
     {
         std::cout << "---App: starting bot process..." << std::endl;
+        std::fclose(stdin);
+
+        debugger->setMaxLogFilesToKeep(a->arguments().at(5).mid(10).toInt());
+        debugger->setLogDir(a->arguments().at(6).mid(10));
+        debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
+        debugger->setEnabled(true);
 
         botManager = new BotManager();
-        botManager->setOAuthToken(configManager->token());
+        botManager->setOAuthToken(a->arguments().at(2).mid(8));
         botManager->init();
         //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, botManager, &BotManager::stop);
         QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);

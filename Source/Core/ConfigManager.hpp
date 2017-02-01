@@ -37,10 +37,16 @@ public:
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     void setMaxLogFilesToKeep(quint16);
-    quint16 maxLogFilesToKeep() const;
+    const quint16 &maxLogFilesToKeep() const;
 
     void setDebuggerPrintToTerminal(bool);
-    bool debuggerPrintToTerminal() const;
+    const bool &debuggerPrintToTerminal() const;
+
+    void setServerListeningAddress(const QString &address);
+    const QString &serverListeningAddress() const;
+
+    void setServerListeningPort(const quint16 &port);
+    const quint16 &serverListeningPort() const;
 
     void setOAuthToken(const QString &token);
     const QString &token() const;
@@ -60,17 +66,19 @@ private:
     std::unique_ptr<QFile> m_configFile;
     QDataStream m_configStream;
 
+    void p_resetStream();
+
     // settings.bin header
     QString m_cfgHeader;
 
     // version of the configuration file
     quint32 m_cfgVersion;
 
-    void p_resetStream();
-
     // CONFIGURABLE OPTIONS
     quint16 m_cfgMaxLogFilesToKeep = 0;
     bool m_cfgDebuggerPrintToTerminal;
+    QString m_cfgServerListeningAddress;
+    quint16 m_cfgServerListeningPort;
     QString m_cfgOAuthToken;
     QList<quint64> m_cfgJoinedGuilds;
 };

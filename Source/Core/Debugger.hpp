@@ -18,6 +18,7 @@ public:
     ~Debugger();
 
     bool setLogDir(const QString &logDir);
+    const QString logDir() const;
     void setEnabled(bool);
     void setFilenamePrefix(const QString &prefix);
     void setMaxLogFilesToKeep(quint16);

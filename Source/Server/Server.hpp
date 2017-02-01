@@ -27,12 +27,11 @@ public:
     };
 
 public slots:
-    void setListeningAddress(const QLatin1String &address);
+    void setListeningAddress(const QString &address);
     void setListeningPort(quint16 port);
 
     void start();
     void stop();
-    void stopAndQuitThread();
     void restart(); // wrapper around `stop` and `start`
 
 signals:
@@ -50,7 +49,7 @@ private:
     std::unique_ptr<HttpListener> m_httpListener;
     std::unique_ptr<RequestMapper> m_requestMapper;
 
-    QLatin1String m_listeningAddress = QLatin1String("127.0.0.1");
+    QString m_listeningAddress = QLatin1String("127.0.0.1");
     quint16 m_listeningPort = 4555; // default server port
 
     void p_startPrivate();

@@ -28,7 +28,7 @@ Server::~Server()
     this->m_httpListener.reset();
 }
 
-void Server::setListeningAddress(const QLatin1String &address)
+void Server::setListeningAddress(const QString &address)
 {
     if (address.size() != 0)
     {
@@ -96,15 +96,6 @@ void Server::p_startPrivate()
 void Server::stop()
 {
     this->p_stopPrivate();
-    emit stopped();
-}
-
-void Server::stopAndQuitThread()
-{
-    this->p_stopPrivate();
-
-    static_cast<QThread*>(this->parent())->requestInterruption();
-    static_cast<QThread*>(this->parent())->quit();
     emit stopped();
 }
 

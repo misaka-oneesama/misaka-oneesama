@@ -96,6 +96,8 @@ void ConfigManager::loadConfig()
 
             this->m_configStream >> this->m_cfgMaxLogFilesToKeep;
             this->m_configStream >> this->m_cfgDebuggerPrintToTerminal;
+            this->m_configStream >> this->m_cfgServerListeningAddress;
+            this->m_configStream >> this->m_cfgServerListeningPort;
             this->m_configStream >> this->m_cfgOAuthToken;
             this->m_configStream >> this->m_cfgJoinedGuilds;
         }
@@ -132,6 +134,8 @@ void ConfigManager::resetConfig()
 #else
     this->m_cfgDebuggerPrintToTerminal = false;
 #endif
+    this->m_cfgServerListeningAddress = QLatin1String("127.0.0.1");
+    this->m_cfgServerListeningPort = 4555U;
     this->m_cfgJoinedGuilds.clear();
 }
 
@@ -157,6 +161,8 @@ void ConfigManager::saveConfig()
 
         this->m_configStream << this->m_cfgMaxLogFilesToKeep;
         this->m_configStream << this->m_cfgDebuggerPrintToTerminal;
+        this->m_configStream << this->m_cfgServerListeningAddress;
+        this->m_configStream << this->m_cfgServerListeningPort;
         this->m_configStream << this->m_cfgOAuthToken;
         this->m_configStream << this->m_cfgJoinedGuilds;
 
@@ -186,7 +192,7 @@ void ConfigManager::setMaxLogFilesToKeep(quint16 max)
     this->m_cfgMaxLogFilesToKeep = max;
 }
 
-quint16 ConfigManager::maxLogFilesToKeep() const
+const quint16 &ConfigManager::maxLogFilesToKeep() const
 {
     return this->m_cfgMaxLogFilesToKeep;
 }
@@ -197,9 +203,31 @@ void ConfigManager::setDebuggerPrintToTerminal(bool enabled)
     this->m_cfgDebuggerPrintToTerminal = enabled;
 }
 
-bool ConfigManager::debuggerPrintToTerminal() const
+const bool &ConfigManager::debuggerPrintToTerminal() const
 {
     return this->m_cfgDebuggerPrintToTerminal;
+}
+
+void ConfigManager::setServerListeningAddress(const QString &address)
+{
+    QMutexLocker(&this->m_mutex);
+    this->m_cfgServerListeningAddress = address;
+}
+
+const QString &ConfigManager::serverListeningAddress() const
+{
+    return this->m_cfgServerListeningAddress;
+}
+
+void ConfigManager::setServerListeningPort(const quint16 &port)
+{
+    QMutexLocker(&this->m_mutex);
+    this->m_cfgServerListeningPort = port;
+}
+
+const quint16 &ConfigManager::serverListeningPort() const
+{
+    return this->m_cfgServerListeningPort;
 }
 
 void ConfigManager::setOAuthToken(const QString &token)

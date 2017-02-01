@@ -88,6 +88,11 @@ bool Debugger::setLogDir(const QString &logDir)
     return this->m_valid;
 }
 
+const QString Debugger::logDir() const
+{
+    return this->m_logDir.absolutePath();
+}
+
 void Debugger::setEnabled(bool enabled)
 {
     QMutexLocker(&this->m_mutex);
