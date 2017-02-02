@@ -51,11 +51,11 @@ All Qt supported UNIX like platforms should be supported. Originally this is a p
 
 ## Testing
 
-**Branch:** `ipc-dbus-testing`
-
 **Overview:**
 
 Instead of multithreading all components in one process I decided to try something with IPC instead. I want to have at least 3 separate processes - the `master` process which acts as controller and observer, the `server` process which handles all HTTP requests and operates the Web UI, and the `bot` process which is the actual Discord™ bot.
+
+<sub>Note: There is still multithreading in all of the individual processes.</sub>
 
 I also plan to give D-Bus a try to communicate between the processes.
 
