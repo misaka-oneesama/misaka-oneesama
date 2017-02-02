@@ -201,6 +201,7 @@ int main(int argc, char **argv)
         server->setListeningPort(a->arguments().at(3).mid(7).toInt());
         //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, server, &Server::stop);
         QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
+        QObject::connect(server, &Server::stopped, a.get(), &QCoreApplication::quit);
         QTimer::singleShot(0, server, &Server::start);
     }
 
