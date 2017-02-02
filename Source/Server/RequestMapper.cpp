@@ -27,41 +27,44 @@ void RequestMapper::service(HttpRequest &request, HttpResponse &response)
     // todo: change to html when we got basic functionality working
     response.setHeader("Content-Type", "text/plain; charset=UTF-8");
 
-    // note: all responses here are for experimenting right now
-    // also the path handling should be more professional than this anyway
-
     if (path == "/")
     {
         response.setStatus(200);
         response.write(QString("It's working :D").toUtf8(), true);
     }
 
-    // shutdown the bot
-    /// FIXME / INCOMPLETE
-    // currently segfaults after the server stopped
-    // what happens with the botmanager instance?
-    else if (path == "/shutdown")
+    else if (path.startsWith("/api"))
     {
-        response.setStatus(200);
-        response.write(QByteArray(), true);
-
-        emit shutdown();
-    }
-
-    // static file controller test
-    else if (path.startsWith("/"))
-    {
-        static StaticFileController *staticFileController = new StaticFileController(
-                    new QtWebApp::StaticFileControllerConfig(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)));
-        staticFileController->setContentTypeEncoding("UTF-8");
-        staticFileController->service(request, response);
+        this->api(request, response, path.mid(4));
     }
 
     else
     {
+        //static StaticFileController *staticFileController = new StaticFileController(
+        //            new QtWebApp::StaticFileControllerConfig(QStandardPaths::writableLocation(QStandardPaths::HomeLocation)));
+        //staticFileController->setContentTypeEncoding("UTF-8");
+        //staticFileController->service(request, response);
+
         response.setStatus(404);
         response.write(QString("No handler for URL '%1' found").arg(path.constData()).toUtf8(), true);
     }
 
     debugger->notice(QString("[HTTP %1] RequestMapper: finished request for (path=%2)").arg(request.getMethod().constData(), path.constData()));
+}
+
+void RequestMapper::api(HttpRequest &request, HttpResponse &response, const QString &endpoint)
+{
+    if (endpoint == "/shutdown")
+    {
+        response.setStatus(200);
+        response.write(QByteArray("Shutting down..."), true);
+
+        emit shutdown();
+    }
+
+    else
+    {
+        response.setStatus(400);
+        response.write(QString("No such endpoint: %1").arg(request.getPath().constData()).toUtf8(), true);
+    }
 }

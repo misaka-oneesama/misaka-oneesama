@@ -15,6 +15,7 @@ public:
     ~RequestMapper();
 
     void service(HttpRequest &request, HttpResponse &response);
+    void api(HttpRequest &request, HttpResponse &response, const QString &endpoint);
 
 signals:
     void shutdown();
