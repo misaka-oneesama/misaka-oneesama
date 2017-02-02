@@ -15,6 +15,9 @@ public:
     ~RequestMapper();
 
     void service(HttpRequest &request, HttpResponse &response);
+
+signals:
+    void shutdown();
 };
 
 #endif // REQUESTMAPPER_HPP

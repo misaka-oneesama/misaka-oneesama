@@ -65,15 +65,23 @@ void Server::setListeningPort(quint16 port)
 
 void Server::start()
 {
-    if (!this->m_configured || this->m_listeningAddress.size() == 0 || this->m_listeningPort == 0)
+    if (!this->m_isRunning)
     {
-        debugger->error("Server: can not start a unconfigured server, please specify a valid address and port number");
-        emit error(ServerNotConfigured);
-        return;
+        if (!this->m_configured || this->m_listeningAddress.size() == 0 || this->m_listeningPort == 0)
+        {
+            debugger->error("Server: can not start a unconfigured server, please specify a valid address and port number");
+            emit error(ServerNotConfigured);
+            return;
+        }
+
+        this->p_startPrivate();
+        emit started();
     }
 
-    this->p_startPrivate();
-    emit started();
+    else
+    {
+        debugger->warning(QString("Server: server is already running on %1:%2").arg(this->m_listeningAddress, QString::number(this->m_listeningPort)));
+    }
 }
 
 void Server::p_startPrivate()
@@ -84,19 +92,24 @@ void Server::p_startPrivate()
     {
         this->m_requestMapper.reset(new RequestMapper(this));
         this->m_httpListener.reset(new HttpListener(this->m_httpServerSettings.get(), this->m_requestMapper.get(), this));
+        QObject::connect(this->m_requestMapper.get(), &RequestMapper::shutdown, this, &Server::stop);
+        this->m_isRunning = true;
         debugger->notice("Server: started");
-    }
-
-    else
-    {
-        debugger->warning(QString("Server: server is already running on %1:%2").arg(this->m_listeningAddress, QString::number(this->m_listeningPort)));
     }
 }
 
 void Server::stop()
 {
-    this->p_stopPrivate();
-    emit stopped();
+    if (this->m_isRunning)
+    {
+        this->p_stopPrivate();
+        emit stopped();
+    }
+
+    else
+    {
+        debugger->warning("Server: server already stopped");
+    }
 }
 
 void Server::p_stopPrivate()
@@ -105,17 +118,14 @@ void Server::p_stopPrivate()
 
     if (this->m_httpListener && this->m_requestMapper)
     {
+        QObject::disconnect(this->m_requestMapper.get(), &RequestMapper::shutdown, this, &Server::stop);
         this->m_requestMapper.reset();
 
         this->m_httpListener->close();
         this->m_httpListener.reset();
 
+        this->m_isRunning = false;
         debugger->notice("Server: stopped");
-    }
-
-    else
-    {
-        debugger->warning("Server: server already stopped");
     }
 }
 

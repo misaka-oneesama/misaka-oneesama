@@ -44,6 +44,7 @@ signals:
 
 private:
     bool m_configured = false;
+    bool m_isRunning = false;
 
     std::unique_ptr<QtWebApp::HttpServerSettings> m_httpServerSettings;
     std::unique_ptr<HttpListener> m_httpListener;

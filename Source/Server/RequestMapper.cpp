@@ -45,7 +45,7 @@ void RequestMapper::service(HttpRequest &request, HttpResponse &response)
         response.setStatus(200);
         response.write(QByteArray(), true);
 
-        static_cast<Server*>(this->parent())->stop();
+        emit shutdown();
     }
 
     // static file controller test
