@@ -118,7 +118,18 @@ void Debugger::setEnabled(bool enabled)
             this->m_logStream.setDevice(this->m_logFile.get());
             std::cerr << "Debugger: new log file " << qUtf8Printable(this->m_logFile->fileName()) << std::endl;
 
-            this->m_logStream << qApp->applicationName() << " " << qApp->applicationVersion() << "\n\n";
+            this->m_logStream << qApp->applicationName() << " " << qApp->applicationVersion();
+
+            if (this->m_prefix.isEmpty())
+            {
+                this->m_logStream << "\n\n";
+            }
+
+            else
+            {
+                this->m_logStream << QString::fromUtf8(" 〔") << this->m_prefix << QString::fromUtf8("〕") << "\n\n";
+            }
+
             this->m_logStream << "Logging started at " << QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd hh:mm:ss") << " UTC\n";
             this->m_logStream.flush();
             this->m_logFile->flush();
