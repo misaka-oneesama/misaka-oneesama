@@ -6,7 +6,7 @@
 #include <Source/Global.hpp>
 
 BotManager::BotManager(QObject *parent)
-    : QObject(parent)
+    : QObject(parent) //QDBusAbstractAdaptor(parent)
 {
 }
 

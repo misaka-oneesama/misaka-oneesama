@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QString>
 
+#include <QDBusAbstractAdaptor>
+#include <QDBusVariant>
+
 #include <memory>
 
 #include "RequestMapper.hpp"
@@ -13,9 +16,12 @@
 
 using namespace QtWebApp::HttpServer;
 
-class Server : public QObject
+class Server : public QObject //QDBusAbstractAdaptor
 {
     Q_OBJECT
+    //Q_CLASSINFO("D-Bus Interface", "moe.misaka-oneesama.discordbot.Server")
+    Q_PROPERTY(QString listeningAddress MEMBER m_listeningAddress WRITE setListeningAddress NOTIFY listeningAddressChanged)
+    Q_PROPERTY(quint16 listeningPort MEMBER m_listeningPort WRITE setListeningPort NOTIFY listeningPortChanged)
 
 public:
     Server(QObject *parent = nullptr);

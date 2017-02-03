@@ -4,13 +4,18 @@
 #include <QObject>
 #include <QDiscord>
 
+#include <QDBusAbstractAdaptor>
+#include <QDBusVariant>
+
 #include <memory>
 
 #include "DiscordEventHandler.hpp"
 
-class BotManager : public QObject
+class BotManager : public QObject //QDBusAbstractAdaptor
 {
     Q_OBJECT
+    //Q_CLASSINFO("D-Bus Interface", "moe.misaka-oneesama.discordbot.Bot")
+    Q_PROPERTY(QString token MEMBER m_token WRITE setOAuthToken)
 
 public:
     BotManager(QObject *parent = nullptr);

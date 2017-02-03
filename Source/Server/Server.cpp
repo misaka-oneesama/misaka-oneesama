@@ -4,7 +4,7 @@
 #include <QThread>
 
 Server::Server(QObject *parent)
-    : QObject(parent)
+    : QObject(parent) //QDBusAbstractAdaptor(parent)
 {
     this->m_httpServerSettings.reset(new QtWebApp::HttpServerSettings);
 

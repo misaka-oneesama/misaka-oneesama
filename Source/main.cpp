@@ -86,6 +86,8 @@ int main(int argc, char **argv)
     if (!QDBusConnection::sessionBus().isConnected()) {
         std::cerr << "---" << IpcProcess::instanceName(instance) << ": unable to connect to the message bus!" << '\n'
                   << "---" << IpcProcess::instanceName(instance) << ": make sure that the D-Bus daemon is running." << std::endl;
+        std::cerr << "---" << IpcProcess::instanceName(instance) << qUtf8Printable(QDBusConnection::sessionBus().lastError().message()) << std::endl;
+
         a.reset();
         std::exit(2);
     }
@@ -154,6 +156,16 @@ int main(int argc, char **argv)
         QDBusServiceWatcher serviceWatcher(dbus_service_name, QDBusConnection::sessionBus(), QDBusServiceWatcher::WatchForRegistration);
         //QObject::connect(&serviceWatcher, &QDBusServiceWatcher::serviceRegistered, );
 
+        if (!QDBusConnection::sessionBus().registerService(dbus_service_name))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+
+            a.reset();
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
+
         debugger->notice("IPC: Starting server instance...");
         ipcServer = new IpcProcess(a.get());
         ipcServer->setIdentifier(IpcProcess::InstanceType::Server);
@@ -196,12 +208,24 @@ int main(int argc, char **argv)
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
 
+        if (!QDBusConnection::sessionBus().registerService(dbus_service_name + ".Server"))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+
+            a.reset();
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
+
+        //QObject busObjServer;
         server = new Server();
         server->setListeningAddress(a->arguments().at(2).mid(9));
         server->setListeningPort(a->arguments().at(3).mid(7).toInt());
         //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, server, &Server::stop);
         QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
         QObject::connect(server, &Server::stopped, a.get(), &QCoreApplication::quit);
+        //QDBusConnection::sessionBus().registerObject("/", &busObjServer);
         QTimer::singleShot(0, server, &Server::start);
     }
 
@@ -215,12 +239,32 @@ int main(int argc, char **argv)
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
 
+        if (!QDBusConnection::sessionBus().registerService(dbus_service_name + ".Bot"))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+
+            a.reset();
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
+
+        //QObject busObjBot;
         botManager = new BotManager();
         botManager->setOAuthToken(a->arguments().at(2).mid(8));
         botManager->init();
         //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, botManager, &BotManager::stop);
         QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);
+        QObject::connect(botManager, &BotManager::stopped, a.get(), &QCoreApplication::quit);
+        //QDBusConnection::sessionBus().registerObject("/", &busObjBot);
         QTimer::singleShot(0, botManager, static_cast<void(BotManager::*)()>(&BotManager::login));
+
+        // remove OAuth token from argv (hides it from /proc/self/exe, ps ax, and other sources)
+        std::size_t argvlen = strlen(argv[2]);
+        for (std::size_t i = 8; i < argvlen; i++)
+        {
+            argv[2][i] = '*';
+        }
     }
 
     int status = a->exec();
