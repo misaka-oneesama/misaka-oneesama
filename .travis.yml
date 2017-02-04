@@ -14,7 +14,6 @@ compiler:
 # workaround 'pacaur' installation issue (:: editor variable unset)
 env:
   - EDITOR="echo"
-  - VISUAL="echo"
 
 arch:
   packages:
