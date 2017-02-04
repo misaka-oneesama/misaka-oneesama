@@ -102,7 +102,7 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
      - [x] D-Bus interfaces
      - [ ] Error handling and process respawning
      - [ ] Testing if everything works...
-  - [x] Handle UNIX signals ~~(use C preprocessor to exclude Windows)~~
+ - [x] Handle UNIX signals ~~(use C preprocessor to exclude Windows)~~
    - [x] Clean up and process termination
  - [x] Implement basic HTTP server
    - [x] Improve QtWebApp (`HttpServer` module)
