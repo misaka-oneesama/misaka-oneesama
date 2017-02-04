@@ -2,6 +2,7 @@
 #include <Global.hpp>
 
 #include <QStandardPaths>
+#include <QDBusReply>
 
 #include <iostream>
 
@@ -10,11 +11,19 @@
 RequestMapper::RequestMapper(QObject *parent)
     : HttpRequestHandler(parent)
 {
+    this->m_ifaceMaster.reset(new QDBusInterface(dbus_service_name, "/", "", QDBusConnection::sessionBus()));
+    this->m_ifaceServer.reset(new QDBusInterface(dbus_service_name_server, "/", "", QDBusConnection::sessionBus()));
+    this->m_ifaceBot.reset(new QDBusInterface(dbus_service_name_bot, "/", "", QDBusConnection::sessionBus()));
+
     debugger->notice("RequestMapper created");
 }
 
 RequestMapper::~RequestMapper()
 {
+    this->m_ifaceMaster.reset();
+    this->m_ifaceServer.reset();
+    this->m_ifaceBot.reset();
+
     debugger->notice("RequestMapper destroyed");
 }
 
@@ -59,6 +68,38 @@ void RequestMapper::api(HttpRequest &request, HttpResponse &response, const QStr
         response.write(QByteArray("Shutting down..."), true);
 
         emit shutdown();
+    }
+
+    else if (endpoint == "/bot/start")
+    {
+        if (this->m_ifaceMaster->isValid())
+        {
+            this->m_ifaceMaster->call("startBot");
+            response.setStatus(200);
+            response.write(QByteArray("Call to 'startBot' was successful."), true);
+        }
+
+        else
+        {
+            response.setStatus(503);
+            response.write(QByteArray("Can't connect to the D-Bus Interface."), true);
+        }
+    }
+
+    else if (endpoint == "/bot/stop")
+    {
+        if (this->m_ifaceMaster->isValid())
+        {
+            this->m_ifaceMaster->call("stopBot");
+            response.setStatus(200);
+            response.write(QByteArray("Call to 'stopBot' was successful."), true);
+        }
+
+        else
+        {
+            response.setStatus(503);
+            response.write(QByteArray("Can't connect to the D-Bus Interface."), true);
+        }
     }
 
     else

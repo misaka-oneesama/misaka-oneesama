@@ -1,6 +1,9 @@
 #ifndef REQUESTMAPPER_HPP
 #define REQUESTMAPPER_HPP
 
+#include <QDBusInterface>
+#include <memory>
+
 #include "HttpRequestHandler.hpp"
 
 using namespace QtWebApp::HttpServer;
@@ -19,6 +22,11 @@ public:
 
 signals:
     void shutdown();
+
+private:
+    std::unique_ptr<QDBusInterface> m_ifaceMaster;
+    std::unique_ptr<QDBusInterface> m_ifaceServer;
+    std::unique_ptr<QDBusInterface> m_ifaceBot;
 };
 
 #endif // REQUESTMAPPER_HPP
