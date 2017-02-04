@@ -20,7 +20,7 @@ class Server : public QObject
 
 public:
     Server(QObject *parent = nullptr);
-    Server(const QLatin1String &listeningAddress, quint16 listeningPort, QObject *parent = nullptr);
+    Server(const QString &listeningAddress, quint16 listeningPort, QObject *parent = nullptr);
     ~Server();
 
     enum ErrorCode : quint8 {

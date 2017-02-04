@@ -8,6 +8,7 @@ SOURCES += \
     $$PWD/Source/Core/ConfigManager.cpp \
     $$PWD/Source/Core/ThreadId.cpp \
     $$PWD/Source/Core/IpcProcess.cpp \
+    $$PWD/Source/Core/DBusInterface.cpp \
     \
     $$PWD/Source/Server/Server.cpp \
     $$PWD/Source/Server/RequestMapper.cpp \
@@ -22,6 +23,7 @@ HEADERS += \
     $$PWD/Source/Core/ConfigManager.hpp \
     $$PWD/Source/Core/ThreadId.hpp \
     $$PWD/Source/Core/IpcProcess.hpp \
+    $$PWD/Source/Core/DBusInterface.hpp \
     \
     $$PWD/Source/Server/Server.hpp \
     $$PWD/Source/Server/RequestMapper.hpp \

@@ -37,6 +37,8 @@ public:
     // uses a mutex to block, recommended to disable for Production/Release builds
     void redirectOutput(bool);
 
+    bool isRunning() const;
+
 public slots:
     void terminate();
 

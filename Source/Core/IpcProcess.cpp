@@ -41,6 +41,11 @@ void IpcProcess::redirectOutput(bool enabled)
     }
 }
 
+bool IpcProcess::isRunning() const
+{
+    return (this->state() == IpcProcess::Starting || this->state() == IpcProcess::Running);
+}
+
 void IpcProcess::terminate()
 {
     QMutexLocker(&this->m_mutex);
