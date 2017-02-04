@@ -3,7 +3,6 @@
 
 #include <QDBusInterface>
 #include <QDBusServiceWatcher>
-#include <QDBusAbstractAdaptor>
 #include <QDBusVariant>
 #include <QProcess>
 #include <QFile>
@@ -243,6 +242,18 @@ int main(int argc, char **argv)
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
 
+        QDBusInterface iface(dbus_service_name, "/", "", QDBusConnection::sessionBus());
+        if (!iface.isValid())
+        {
+            debugger->error("D-Bus: the master process interface couldn't be found!");
+            debugger->error("D-Bus: refusing to start!");
+            debugger->error("D-Bus: " + QDBusConnection::sessionBus().lastError().message());
+            a.reset();
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
+
         server = new Server();
         ServerDBusAdapter *server_dbus = new ServerDBusAdapter(server);
         server->setListeningAddress(a->arguments().at(2).mid(9));
@@ -287,6 +298,18 @@ int main(int argc, char **argv)
         debugger->setLogDir(a->arguments().at(6).mid(10));
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
+
+        QDBusInterface iface(dbus_service_name, "/", "", QDBusConnection::sessionBus());
+        if (!iface.isValid())
+        {
+            debugger->error("D-Bus: the master process interface couldn't be found!");
+            debugger->error("D-Bus: refusing to start!");
+            debugger->error("D-Bus: " + QDBusConnection::sessionBus().lastError().message());
+            a.reset();
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
 
         botManager = new BotManager();
         BotManagerDBusAdapter *botManager_dbus = new BotManagerDBusAdapter(botManager);
