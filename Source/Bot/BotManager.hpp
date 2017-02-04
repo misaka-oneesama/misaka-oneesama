@@ -2,13 +2,12 @@
 #define BOTMANAGER_HPP
 
 #include <QObject>
-#include <QDiscord>
-
 #include <QDBusVariant>
 
-#include <memory>
+#include <QDiscord>
+#include <Bot/DiscordEventHandler.hpp>
 
-#include "DiscordEventHandler.hpp"
+#include <memory>
 
 class BotManager : public QObject
 {

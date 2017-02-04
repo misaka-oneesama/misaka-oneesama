@@ -9,7 +9,7 @@
 #include <QThread>
 #include <QMutexLocker>
 
-#include "ThreadId.hpp"
+#include <Core/ThreadId.hpp>
 
 #include <iostream>
 

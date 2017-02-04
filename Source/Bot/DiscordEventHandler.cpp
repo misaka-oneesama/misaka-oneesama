@@ -1,6 +1,6 @@
 #include "DiscordEventHandler.hpp"
 
-#include <Source/Global.hpp>
+#include <Global.hpp>
 
 DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QObject *parent)
     : QObject(parent)

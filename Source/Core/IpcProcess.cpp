@@ -1,10 +1,9 @@
 #include "IpcProcess.hpp"
+#include <Global.hpp>
 
 #include <QMetaMethod>
 
 #include <iostream>
-
-#include <Source/Global.hpp>
 
 IpcProcess::IpcProcess(QObject *parent)
     : QProcess(parent)

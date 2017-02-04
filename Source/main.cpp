@@ -16,8 +16,8 @@
 #include <QFile>
 ///======================
 
-#include <Source/Global.hpp>
-#include "Core/IpcProcess.hpp"
+#include <Global.hpp>
+#include <Core/IpcProcess.hpp>
 
 std::unique_ptr<QCoreApplication> a;
 IpcProcess::InstanceType instance;
@@ -91,6 +91,13 @@ int main(int argc, char **argv)
         a.reset();
         std::exit(2);
     }
+
+    const QDBusConnection::RegisterOptions dbus_flags =
+              QDBusConnection::ExportAllSlots
+            | QDBusConnection::ExportAllSignals
+            | QDBusConnection::ExportAllProperties
+            | QDBusConnection::ExportAllInvokables
+            | QDBusConnection::ExportAllContents;
 
     // Register signal handlers
     std::cout << "---" << IpcProcess::instanceName(instance) << ": registering signals SIGINT, SIGTERM and SIGQUIT..." << std::endl;
@@ -224,7 +231,7 @@ int main(int argc, char **argv)
             failed = true;
         }
 
-        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name_server, server_dbus, QDBusConnection::ExportAllSlots))
+        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name_server, server_dbus, dbus_flags))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
             failed = true;
@@ -277,7 +284,7 @@ int main(int argc, char **argv)
             failed = true;
         }
 
-        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name_bot, botManager_dbus, QDBusConnection::ExportAllSlots))
+        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name_bot, botManager_dbus, dbus_flags))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
             failed = true;

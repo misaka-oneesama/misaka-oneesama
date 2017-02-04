@@ -1,9 +1,8 @@
 #include "BotManager.hpp"
+#include <Global.hpp>
 
 #include <QThread>
-#include "ThreadId.hpp"
-
-#include <Source/Global.hpp>
+#include <Core/ThreadId.hpp>
 
 BotManager::BotManager(QObject *parent)
     : QObject(parent)

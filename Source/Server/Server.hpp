@@ -3,13 +3,12 @@
 
 #include <QObject>
 #include <QString>
-
 #include <QDBusVariant>
 
 #include <memory>
 
 #include "HttpListener.hpp"
-#include "RequestMapper.hpp"
+#include <Server/RequestMapper.hpp>
 
 using namespace QtWebApp::HttpServer;
 

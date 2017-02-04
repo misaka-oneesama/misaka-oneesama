@@ -1,6 +1,6 @@
 #include "Server.hpp"
+#include <Global.hpp>
 
-#include <Source/Global.hpp>
 #include <QThread>
 
 Server::Server(QObject *parent)
@@ -11,7 +11,7 @@ Server::Server(QObject *parent)
     this->m_configured = true;
 }
 
-Server::Server(const QLatin1String &listeningAddress, quint16 listeningPort, QObject *parent)
+Server::Server(const QString &listeningAddress, quint16 listeningPort, QObject *parent)
     : Server(parent)
 {
     this->m_listeningAddress = listeningAddress;

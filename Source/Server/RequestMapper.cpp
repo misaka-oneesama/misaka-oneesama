@@ -1,12 +1,11 @@
 #include "RequestMapper.hpp"
+#include <Global.hpp>
 
-#include <Source/Global.hpp>
-#include "Server.hpp"
-
-#include "StaticFileController.hpp"
+#include <QStandardPaths>
 
 #include <iostream>
-#include <QStandardPaths>
+
+#include "StaticFileController.hpp"
 
 RequestMapper::RequestMapper(QObject *parent)
     : HttpRequestHandler(parent)

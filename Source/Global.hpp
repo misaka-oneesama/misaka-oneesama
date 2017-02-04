@@ -6,7 +6,7 @@
 #include "Core/IpcProcess.hpp"
 
 #include "Server/Server.hpp"
-#include "Core/BotManager.hpp"
+#include "Bot/BotManager.hpp"
 
 extern Debugger *debugger;              // can be used in every instance (unique)
 extern ConfigManager *configManager;    // can ONLY be used in the [Master] instance
