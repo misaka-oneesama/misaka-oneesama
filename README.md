@@ -15,9 +15,16 @@ Discord Bot with Web UI and Plugin support written in C++14
 
 **ATTENTION: In development!**
 
-Misaka-oneesama is an upcoming bot for Discord™ with a Web-based configuration panel and plugin support. It will provide a simple Plugin API and a graphical configuration. The web interface is accessible via HTTP.
+Misaka-oneesama is an upcoming bot for Discord™ with a Web-based configuration panel and plugin support. It will provide a simple Plugin API and a graphical configuration. The web interface is accessible via HTTP. The D-Bus integration offers great possibilities to control the bot from 3rd party applications and scripts.
 
 I plan to develop some plugins by myself to use with the bot.
+
+
+### Features (**NOTICE:** incomplete list, subject to change during development)
+
+ - **IPC and multithreaded** - load balancing across multiple processes and threads
+ - **Web UI** to setup and configure the bot
+ - **D-Bus integrated** - control the bot from 3rd party scripts and applications
 
 
 ## Requirements
@@ -51,21 +58,31 @@ All Qt supported UNIX like platforms should be supported. Originally this is a p
 
 ## Testing
 
-**Overview:**
+After running the app it checks if a D-Bus connection can be established. On success it self-spawns itself with different command line arguments to start all the components which again checks for a D-Bus connection and the interface the master process created. The master interface is required for the child processes, if it is not available (example: on direct execution, skipping the master process) the component refuses to start and kills itself. There are 3 processes in total. The first is the master process which glues all components together and must be running. The second is the Server which operates the Web UI. The Web UI can be accessed using [http://127.0.0.1:4555/](http://127.0.0.1:4555/) (default configuration). The server instance handles all HTTP requests and responses and is multithreaded and can handle hundreds of requests in parallel. The third is the actual Discord™ bot which communicates with the WebSocket connection is realtime.
 
-Instead of multithreading all components in one process I decided to try something with IPC instead. I want to have at least 3 separate processes - the `master` process which acts as controller and observer, the `server` process which handles all HTTP requests and operates the Web UI, and the `bot` process which is the actual Discord™ bot.
+#### D-Bus
 
-<sub>Note: There is still multithreading in all of the individual processes.</sub>
+All 3 instances have their own D-Bus service and methods. I recommend you fire up the **Qt QDBusViewer** application for a convenient and complete list of all methods. To call a method from the command line you can use `qdbus` or `dbus-send`.
 
-I also plan to give D-Bus a try to communicate between the processes.
+`qdbus moe.misaka_oneesama / {methodName}` <br>
+`dbus-send --session --dest=moe.misaka_oneesama --type=method_call --print-reply=literal / moe.misaka_oneesama.{methodName}`
 
-##### What works?
+**Example:** Check if the bot process is running.
 
-**`A:`** The self spawning to create the other 2 instances as well as transferring the configuration to the child processes so that is loads only once during the initial startup. All components work and operate normally, but there isn't any communication yet between the childs. The master process detects when a child crashes but it doesn't respawn it yet. Sending SIGINT, SIGTERM or SIGQUIT to any of the child processes stops them after some cleanup work. Sending any of this signals to the master process stops any child processes (cleanup work is done first) and then it stops itself and finishes with the cleanup. SIGKILL is evil, but the app can be restarted without any critical problems so far. This changes in the future when I need more complex locks (`QSystemSemaphore`).
+`qdbus moe.misaka_oneesama / isBotRunning` <br>
+`dbus-send --session --dest=moe.misaka_oneesama --type=method_call --print-reply=literal / moe.misaka_oneesama.isBotRunning`
 
---
 
-After running the bot, its Web UI can be accessed using [http://127.0.0.1:4555/](http://127.0.0.1:4555/) (default configuration). There are multiple processes. The server instance which handles HTTP requests and responses, the bot instance which communicates with the Discord™ API over WebSockets and then there is the master process which glues everything together.
+There are several methods already, including but not limited to
+
+  - Start/Stop/Restart/Reload the server process
+  - Start/Stop/Restart the bot process
+  - Check if a component is running or not
+  - Change the server configuration at runtime and hot reload it
+
+There will be many more methods in the future. Most of them will be used programmatically in the future to control and configure most things. This is already the planned and preferred method to configure the bot from the Web UI. Some methods will be unused internally, but they offer a great possibility to control the bot from scripts or 3rd party applications via the D-Bus daemon. This is one thing which will make this a very powerful and highly configurable Discord™ bot :)
+
+#### Notes
 
 At the moment there isn't anything interesting served over HTTP. Just some string saying `It's working :D` or an attempt to serve a file from the home directory on any other requested path. Discord events are processed in real-time and QDiscord supports quite some events already to make a useful bot.
 
@@ -81,10 +98,11 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
  - [ ] ~~Implement a solid multithreaded environment **[QThread and Signal/Slots]**~~ <br>
        Implement a solid IPC environment which communicates over D-Bus
      - [x] Basic Process Manager
-     - [ ] D-Bus interfaces
+     - [x] D-Bus interfaces
      - [ ] Error handling and process respawning
      - [ ] Testing if everything works...
    - [x] Handle UNIX signals ~~(use C preprocessor to exclude Windows)~~
+     - [x] Clean up and process termination
  - [x] Implement basic HTTP server
    - [x] Improve QtWebApp (`HttpServer` module)
      - [x] use alternative config store [`QSettings` spams unnecessary useless files to disk]
