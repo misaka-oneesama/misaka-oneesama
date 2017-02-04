@@ -1,3 +1,7 @@
+# Arch Travis ─ ArchLinux chroot environment for Travis CI
+# (because Ubuntu has way too patched and old packages)
+# https://github.com/mikkeloscar/arch-travis
+
 language: cpp
 sudo: required
 
@@ -6,6 +10,11 @@ os:
 
 compiler:
   - gcc
+
+# workaround 'pacaur' installation issue (:: editor variable unset)
+env:
+  - EDITOR="echo"
+  - VISUAL="echo"
 
 arch:
   packages:
