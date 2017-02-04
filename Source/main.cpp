@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 {
     a.reset(new QCoreApplication(argc, argv));
     a->setApplicationName(QString::fromUtf8("御坂ーお姉さま"));
-    a->setApplicationVersion(QLatin1String("v0.0.1"));
+    a->setApplicationVersion(QLatin1String("v0.0.2"));
     a->setOrganizationName(QString::fromUtf8("マギルゥーベルベット"));
     a->setOrganizationDomain(QLatin1String("magiruuvelvet.gdn"));
 
