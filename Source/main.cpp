@@ -215,7 +215,7 @@ int main(int argc, char **argv)
             configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
             "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
             "--log-dir=" + debugger->logDir()}));
-        ipcBot->start(IpcProcess::ReadOnly);
+        //ipcBot->start(IpcProcess::ReadOnly);
         debugger->notice("IPC: Bot instance started.");
 
         debugger->notice("Registering D-Bus service...");

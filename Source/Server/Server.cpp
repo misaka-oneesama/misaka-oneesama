@@ -2,6 +2,7 @@
 #include <Global.hpp>
 
 #include <QThread>
+#include <QTcpSocket>
 
 Server::Server(QObject *parent)
     : QObject(parent) //QDBusAbstractAdaptor(parent)
@@ -28,12 +29,19 @@ Server::~Server()
     this->m_httpListener.reset();
 }
 
+bool Server::isRunning() const
+{
+    return this->m_isRunning;
+}
+
 void Server::setListeningAddress(const QString &address)
 {
     if (address.size() != 0)
     {
+        this->m_mutex.lock();
         this->m_listeningAddress = address;
         this->m_httpServerSettings->host = address;
+        this->m_mutex.unlock();
         debugger->notice("Server: set listening address to " + address);
         emit listeningAddressChanged();
     }
@@ -50,8 +58,10 @@ void Server::setListeningPort(quint16 port)
     // lets trust the magic of `uint16` here ;)
     if (port != 0)
     {
+        this->m_mutex.lock();
         this->m_listeningPort = port;
         this->m_httpServerSettings->port = port;
+        this->m_mutex.unlock();
         debugger->notice("Server: set listening port to " + QString::number(port));
         emit listeningPortChanged();
     }
@@ -156,4 +166,53 @@ void ServerDBusAdapter::start()
 void ServerDBusAdapter::stop()
 {
     this->d->stop();
+}
+
+bool ServerDBusAdapter::reload()
+{
+    QMutexLocker(&this->m_mutex);
+    this->d->restart();
+    return this->d->isRunning();
+}
+
+bool ServerDBusAdapter::setAddress(const QString &address)
+{
+    debugger->notice("D-Bus: Trying to change server address...");
+
+    if (!address.isEmpty())
+    {
+        this->d->setListeningAddress(address);
+        debugger->notice("D-Bus: Server address changed. Please reload the server for the changes to take effect.");
+        return true;
+    }
+
+    else
+    {
+        debugger->notice("D-Bus: Server: address may not be empty!");
+    }
+
+    return false;
+}
+
+bool ServerDBusAdapter::setPort(const quint16 &port)
+{
+    QMutexLocker(&this->m_mutex);
+    QTcpSocket socket;
+
+    debugger->notice("D-Bus: Trying to change server port...");
+
+    if (socket.bind(port))
+    {
+        socket.close();
+        this->d->setListeningPort(port);
+        debugger->notice("D-Bus: Server port changed. Please reload the server for the changes to take effect.");
+        return true;
+    }
+
+    else
+    {
+        debugger->warning(QString("D-Bus: Server: port %1 is taken or bind error occurred. Try another port.").arg(QString::number(port)));
+    }
+
+    return false;
 }

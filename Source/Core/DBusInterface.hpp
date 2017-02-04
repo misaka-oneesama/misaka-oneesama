@@ -23,10 +23,12 @@ public slots:
     Q_NOREPLY void startServer();
     Q_NOREPLY void stopServer();
     Q_NOREPLY void restartServer();
+    Q_SCRIPTABLE bool isServerRunning();
 
     Q_NOREPLY void startBot();
     Q_NOREPLY void stopBot();
     Q_NOREPLY void restartBot();
+    Q_SCRIPTABLE bool isBotRunning();
 
 private:
     QMutex m_mutex;

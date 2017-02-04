@@ -63,6 +63,11 @@ void DBusInterface::restartServer()
     this->startServer();
 }
 
+bool DBusInterface::isServerRunning()
+{
+    return this->p_server->isRunning();
+}
+
 void DBusInterface::startBot()
 {
     QMutexLocker(&this->m_mutex);
@@ -102,4 +107,9 @@ void DBusInterface::restartBot()
     QMutexLocker(&this->m_mutex);
     this->stopBot();
     this->startBot();
+}
+
+bool DBusInterface::isBotRunning()
+{
+    return this->p_bot->isRunning();
 }

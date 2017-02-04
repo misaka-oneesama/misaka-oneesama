@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QMutex>
 #include <QDBusVariant>
 
 #include <memory>
@@ -27,6 +28,8 @@ public:
         ServerNotConfigured = 0
     };
 
+    bool isRunning() const;
+
 public slots:
     void setListeningAddress(const QString &address);
     void setListeningPort(quint16 port);
@@ -44,6 +47,7 @@ signals:
     void error(ErrorCode);
 
 private:
+    QMutex m_mutex;
     bool m_configured = false;
     bool m_isRunning = false;
 
@@ -69,8 +73,13 @@ public:
 public slots:
     Q_NOREPLY void start();
     Q_NOREPLY void stop();
+    Q_SCRIPTABLE bool reload();
+
+    Q_SCRIPTABLE bool setAddress(const QString &address);
+    Q_SCRIPTABLE bool setPort(const quint16 &port);
 
 private:
+    QMutex m_mutex;
     Server *d = nullptr;
 };
 
