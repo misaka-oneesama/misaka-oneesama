@@ -18,5 +18,7 @@ extern Server *server;                  // [Server] only
 extern BotManager *botManager;          // [Bot] only
 
 extern const QString dbus_service_name; // every instance
+extern const QString dbus_service_name_server;
+extern const QString dbus_service_name_bot;
 
 #endif // GLOBAL_HPP

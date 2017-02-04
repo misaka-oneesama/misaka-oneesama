@@ -6,7 +6,7 @@
 #include <Source/Global.hpp>
 
 BotManager::BotManager(QObject *parent)
-    : QObject(parent) //QDBusAbstractAdaptor(parent)
+    : QObject(parent)
 {
 }
 
@@ -78,4 +78,26 @@ void BotManager::disconnected()
     debugger->notice("BotManager: WebSocket closed by host. Session no longer valid or other network error");
     debugger->notice("BotManager: Reconnecting...");
     emit notify(Disconnected);
+}
+
+
+BotManagerDBusAdapter::BotManagerDBusAdapter(BotManager *botManager, QObject *parent)
+    : QObject(parent)
+{
+    this->d = botManager;
+}
+
+BotManagerDBusAdapter::~BotManagerDBusAdapter()
+{
+    this->d = nullptr;
+}
+
+void BotManagerDBusAdapter::start()
+{
+    this->d->login();
+}
+
+void BotManagerDBusAdapter::stop()
+{
+    this->d->stop();
 }

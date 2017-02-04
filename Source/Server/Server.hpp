@@ -4,22 +4,18 @@
 #include <QObject>
 #include <QString>
 
-#include <QDBusAbstractAdaptor>
 #include <QDBusVariant>
 
 #include <memory>
 
-#include "RequestMapper.hpp"
-
-// QtWebApp
 #include "HttpListener.hpp"
+#include "RequestMapper.hpp"
 
 using namespace QtWebApp::HttpServer;
 
-class Server : public QObject //QDBusAbstractAdaptor
+class Server : public QObject
 {
     Q_OBJECT
-    //Q_CLASSINFO("D-Bus Interface", "moe.misaka-oneesama.discordbot.Server")
     Q_PROPERTY(QString listeningAddress MEMBER m_listeningAddress WRITE setListeningAddress NOTIFY listeningAddressChanged)
     Q_PROPERTY(quint16 listeningPort MEMBER m_listeningPort WRITE setListeningPort NOTIFY listeningPortChanged)
 
@@ -61,6 +57,22 @@ private:
 
     void p_startPrivate();
     void p_stopPrivate();
+};
+
+class ServerDBusAdapter : public QObject
+{
+    Q_OBJECT
+
+public:
+    ServerDBusAdapter(Server *server, QObject *parent = nullptr);
+    ~ServerDBusAdapter();
+
+public slots:
+    Q_NOREPLY void start();
+    Q_NOREPLY void stop();
+
+private:
+    Server *d = nullptr;
 };
 
 #endif // SERVER_HPP

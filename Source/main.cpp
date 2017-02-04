@@ -203,29 +203,43 @@ int main(int argc, char **argv)
         std::cout << "---App: starting server process..." << std::endl;
         std::fclose(stdin);
 
+        bool failed = false;
+
         debugger->setMaxLogFilesToKeep(a->arguments().at(6).mid(10).toInt());
         debugger->setLogDir(a->arguments().at(7).mid(10));
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
 
-        if (!QDBusConnection::sessionBus().registerService(dbus_service_name + ".Server"))
-        {
-            debugger->error(QDBusConnection::sessionBus().lastError().message());
-
-            a.reset();
-            delete configManager;
-            delete debugger;
-            std::exit(1);
-        }
-
-        //QObject busObjServer;
         server = new Server();
+        ServerDBusAdapter *server_dbus = new ServerDBusAdapter(server);
         server->setListeningAddress(a->arguments().at(2).mid(9));
         server->setListeningPort(a->arguments().at(3).mid(7).toInt());
         //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, server, &Server::stop);
         QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
         QObject::connect(server, &Server::stopped, a.get(), &QCoreApplication::quit);
-        //QDBusConnection::sessionBus().registerObject("/", &busObjServer);
+
+        if (!QDBusConnection::sessionBus().registerService(dbus_service_name_server))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+            failed = true;
+        }
+
+        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name_server, server_dbus, QDBusConnection::ExportAllSlots))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+            failed = true;
+        }
+
+        if (failed)
+        {
+            a.reset();
+            delete server_dbus;
+            delete server;
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
+
         QTimer::singleShot(0, server, &Server::start);
     }
 
@@ -234,30 +248,16 @@ int main(int argc, char **argv)
         std::cout << "---App: starting bot process..." << std::endl;
         std::fclose(stdin);
 
+        bool failed = false;
+
         debugger->setMaxLogFilesToKeep(a->arguments().at(5).mid(10).toInt());
         debugger->setLogDir(a->arguments().at(6).mid(10));
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
 
-        if (!QDBusConnection::sessionBus().registerService(dbus_service_name + ".Bot"))
-        {
-            debugger->error(QDBusConnection::sessionBus().lastError().message());
-
-            a.reset();
-            delete configManager;
-            delete debugger;
-            std::exit(1);
-        }
-
-        //QObject busObjBot;
         botManager = new BotManager();
+        BotManagerDBusAdapter *botManager_dbus = new BotManagerDBusAdapter(botManager);
         botManager->setOAuthToken(a->arguments().at(2).mid(8));
-        botManager->init();
-        //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, botManager, &BotManager::stop);
-        QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);
-        QObject::connect(botManager, &BotManager::stopped, a.get(), &QCoreApplication::quit);
-        //QDBusConnection::sessionBus().registerObject("/", &busObjBot);
-        QTimer::singleShot(0, botManager, static_cast<void(BotManager::*)()>(&BotManager::login));
 
         // remove OAuth token from argv (hides it from /proc/self/exe, ps ax, and other sources)
         std::size_t argvlen = strlen(argv[2]);
@@ -265,6 +265,35 @@ int main(int argc, char **argv)
         {
             argv[2][i] = '*';
         }
+
+        botManager->init();
+        //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, botManager, &BotManager::stop);
+        QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);
+        QObject::connect(botManager, &BotManager::stopped, a.get(), &QCoreApplication::quit);
+
+        if (!QDBusConnection::sessionBus().registerService(dbus_service_name_bot))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+            failed = true;
+        }
+
+        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name_bot, botManager_dbus, QDBusConnection::ExportAllSlots))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+            failed = true;
+        }
+
+        if (failed)
+        {
+            a.reset();
+            delete botManager_dbus;
+            delete botManager;
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
+
+        QTimer::singleShot(0, botManager, static_cast<void(BotManager::*)()>(&BotManager::login));
     }
 
     int status = a->exec();

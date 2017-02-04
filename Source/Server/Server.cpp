@@ -135,3 +135,25 @@ void Server::restart()
     this->p_startPrivate();
     emit restarted();
 }
+
+
+ServerDBusAdapter::ServerDBusAdapter(Server *server, QObject *parent)
+    : QObject(parent)
+{
+    this->d = server;
+}
+
+ServerDBusAdapter::~ServerDBusAdapter()
+{
+    this->d = nullptr;
+}
+
+void ServerDBusAdapter::start()
+{
+    this->d->start();
+}
+
+void ServerDBusAdapter::stop()
+{
+    this->d->stop();
+}
