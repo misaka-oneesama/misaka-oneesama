@@ -1,13 +1,28 @@
 #ifndef CONFIGMANAGER_HPP
 #define CONFIGMANAGER_HPP
 
-#include <QString>
-#include <QFile>
-#include <QDataStream>
 #include <QMutexLocker>
 #include <QMutex>
+#include <QSqlDatabase>
+#include <QString>
+#include <QVariant>
+#include <QList>
 
 #include <memory>
+
+#define DEFINE_SETTING(NAME_SET, NAME_GET, TYPE) \
+    public: \
+        void set##NAME_SET(const TYPE &value) \
+        { \
+            QMutexLocker(&this->m_mutex); \
+            this->cfg_##NAME_SET = value; \
+        } \
+        const TYPE &NAME_GET() const \
+        { \
+            return this->cfg_##NAME_SET; \
+        } \
+    private: \
+        TYPE cfg_##NAME_SET
 
 class ConfigManager
 {
@@ -15,19 +30,13 @@ public:
     ConfigManager(bool output = true);
     ~ConfigManager();
 
-    // Checks if the config manager can read/write the configuration directory
+    // Checks if the config manager can read/write the configuration directory and database
     bool isValid() const;
 
-    // reads the configuration file and stores the configuration into memory
-    // calling this function again after modifying the config, restores the config from the file
     void loadConfig();
-
-    // restores the hardcoded default configuration
-    // call `saveConfig` to make it permanent
-    void resetConfig();
-
-    // writes back the current configuration into the config file
     void saveConfig();
+    void resetConfig();
+    void resetConfigSoft();
 
     // returns the absolute path to the configuration directory
     const QString &configPath() const;
@@ -36,51 +45,50 @@ public:
     /// CONFIGURABLE OPTIONS
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    void setMaxLogFilesToKeep(quint16);
-    const quint16 &maxLogFilesToKeep() const;
+    // Core Settings
+    DEFINE_SETTING(MaxLogFilesToKeep, maxLogFilesToKeep, quint16);
+    DEFINE_SETTING(DebuggerPrintToTerminal, debuggerPrintToTerminal, bool);
 
-    void setDebuggerPrintToTerminal(bool);
-    const bool &debuggerPrintToTerminal() const;
+    // Server Settings
+    DEFINE_SETTING(ServerListeningAddress, serverListeningAddress, QString);
+    DEFINE_SETTING(ServerListeningPort, serverListeningPort, quint16);
 
-    void setServerListeningAddress(const QString &address);
-    const QString &serverListeningAddress() const;
+    // Bot Settings
+    DEFINE_SETTING(OAuthToken, token, QString);
 
-    void setServerListeningPort(const quint16 &port);
-    const quint16 &serverListeningPort() const;
-
-    void setOAuthToken(const QString &token);
-    const QString &token() const;
-
-    void setJoinedGuilds(const QList<quint64> &guildIds);
+    DEFINE_SETTING(JoinedGuilds, joinedGuilds, QList<quint64>);
+public:
     void addJoinedGuild(const quint64 &guildId);
     void removeJoinedGuild(const quint64 &guildId);
-    const QList<quint64> &joinedGuilds() const;
+
+private:
+    void createDatabaseLayout();
+    bool isValidDatabase() const;
+
+    enum class TableFormat : quint8 {
+        KeyValuePair = 0,
+        IdList
+    };
+
+    bool findTable(const QString &tableName) const;
+    bool verifyFields(const QString &tableName, const TableFormat &format) const;
+    bool tableHasKey(const QString &tableName, const QString &keyName) const;
+    QVariant tableValue(const QString &tableName, const QString &keyName, const QVariant &fallback = QVariant()) const;
+    QList<quint64> tableIdList(const QString &tableName) const;
+    void modifyValueAt(const QString &tableName, const QString &keyName, const QVariant &value);
+    void modifyOrInsertValueAt(const QString &tableName, const QString &keyName, const QVariant &value);
 
 private:
     bool m_valid = false;
+    bool m_validDb = false;
     bool m_output = true;
+
     QMutex m_mutex;
     QString m_configPath;
-    QString m_configFilePath;
-
-    std::unique_ptr<QFile> m_configFile;
-    QDataStream m_configStream;
-
-    void p_resetStream();
-
-    // settings.bin header
-    QString m_cfgHeader;
-
-    // version of the configuration file
-    quint32 m_cfgVersion;
-
-    // CONFIGURABLE OPTIONS
-    quint16 m_cfgMaxLogFilesToKeep = 0;
-    bool m_cfgDebuggerPrintToTerminal;
-    QString m_cfgServerListeningAddress;
-    quint16 m_cfgServerListeningPort;
-    QString m_cfgOAuthToken;
-    QList<quint64> m_cfgJoinedGuilds;
+    QString m_configDatabaseFilename;
+    QSqlDatabase m_db;
 };
+
+#undef DEFINE_SETTING
 
 #endif // CONFIGMANAGER_HPP

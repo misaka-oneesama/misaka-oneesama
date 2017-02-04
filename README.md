@@ -39,6 +39,7 @@ This are the requirements and dependencies which are required to build and opera
 
  - [Qt](https://www.qt.io) 5.6+ (lower versions may work too, but not recommended)
    - Qt Core
+   - Qt SQL ─ for the configuration store
    - Qt D-Bus ─ for the Interprocess communication (IPC)
    - Qt Network ─ for the HTTP server which operates the Web UI
    - Qt WebSockets ─ for the Discord API communication
@@ -92,7 +93,7 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
 
 ## TODO list
 
- - [ ] Refactor `ConfigManager` to use SQLite3 instead of raw binary serialization
+ - [x] Refactor `ConfigManager` to use SQLite3 instead of raw binary serialization
  - [ ] Implement Bot Core
    - [x] Discord login and WebSocket communication
    - [ ] Implement a event handler for all the different Discord events
