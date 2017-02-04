@@ -33,6 +33,8 @@ public:
     void setOAuthToken(const QString &token);
     const QString &token() const;
 
+    bool isConnected() const;
+
 public slots:
     void login();
     void login(const QString &token);
@@ -77,7 +79,10 @@ public slots:
     Q_NOREPLY void login();
     Q_NOREPLY void logout();
 
+    Q_SCRIPTABLE bool isConnected();
+
     Q_NOREPLY void setOAuthToken(const QString &token);
+    //Q_SCRIPTABLE QString OAuthToken(); <-- ATTENTION! NEVER IMPLEMENT THIS FOR SECURITY REASONS!!
 
 private:
     QMutex m_mutex;

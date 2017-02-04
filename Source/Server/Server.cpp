@@ -84,7 +84,7 @@ void Server::setListeningAddress(const QString &address)
 void Server::setListeningPort(const quint16 &port)
 {
     // do nothing if port is unchanged
-    if (port == this->m_listeningPort)
+    if (port == this->m_listeningPort && port == this->m_httpServerSettings->port)
     {
         return;
     }

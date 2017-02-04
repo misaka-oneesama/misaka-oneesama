@@ -33,6 +33,11 @@ const QString &BotManager::token() const
     return this->m_token;
 }
 
+bool BotManager::isConnected() const
+{
+    return this->m_discord->isConnected();
+}
+
 void BotManager::login()
 {
     this->m_discord->login(this->m_token, QDiscordTokenType::Bot);
@@ -101,13 +106,15 @@ void BotManagerDBusAdapter::stop()
     this->d->stop();
 }
 
-// FIXME: doesn't work, some kind of delay required
+// FIXME: doesn't work, delay/sleep doesn't fixes the problem
 bool BotManagerDBusAdapter::reload()
 {
-    QMutexLocker(&this->m_mutex);
-    this->d->logout();
-    this->d->login();
-    return true; // FIXME: check if login was successful
+//    QMutexLocker(&this->m_mutex);
+//    this->d->logout();
+//    this->d->login();
+//    return this->d->isConnected();
+    debugger->warning("D-Bus: Bot: method '.reload' is unimplemented. Use '.logout' + '.login' instead.");
+    return false;
 }
 
 void BotManagerDBusAdapter::login()
@@ -118,6 +125,11 @@ void BotManagerDBusAdapter::login()
 void BotManagerDBusAdapter::logout()
 {
     this->d->logout();
+}
+
+bool BotManagerDBusAdapter::isConnected()
+{
+    return this->d->isConnected();
 }
 
 void BotManagerDBusAdapter::setOAuthToken(const QString &token)
