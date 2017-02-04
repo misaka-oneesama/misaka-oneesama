@@ -322,7 +322,6 @@ int main(int argc, char **argv)
             argv[2][i] = '*';
         }
 
-        botManager->init();
         //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, botManager, &BotManager::stop);
         QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);
         QObject::connect(botManager, &BotManager::stopped, a.get(), &QCoreApplication::quit);

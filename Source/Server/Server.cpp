@@ -5,7 +5,7 @@
 #include <QTcpSocket>
 
 Server::Server(QObject *parent)
-    : QObject(parent) //QDBusAbstractAdaptor(parent)
+    : QObject(parent)
 {
     this->m_httpServerSettings.reset(new QtWebApp::HttpServerSettings);
 
@@ -29,9 +29,37 @@ Server::~Server()
     this->m_httpListener.reset();
 }
 
+bool Server::isPortAvailable(const quint16 &port)
+{
+    static QMutex mutex;
+    mutex.lock();
+
+    QTcpSocket socket;
+
+    if (socket.bind(port))
+    {
+        socket.close();
+        mutex.unlock();
+        return true;
+    }
+
+    mutex.unlock();
+    return false;
+}
+
 bool Server::isRunning() const
 {
     return this->m_isRunning;
+}
+
+const QString &Server::listeningAddress() const
+{
+    return this->m_listeningAddress;
+}
+
+const quint16 &Server::listeningPort() const
+{
+    return this->m_listeningPort;
 }
 
 void Server::setListeningAddress(const QString &address)
@@ -53,10 +81,16 @@ void Server::setListeningAddress(const QString &address)
     }
 }
 
-void Server::setListeningPort(quint16 port)
+void Server::setListeningPort(const quint16 &port)
 {
+    // do nothing if port is unchanged
+    if (port == this->m_listeningPort)
+    {
+        return;
+    }
+
     // lets trust the magic of `uint16` here ;)
-    if (port != 0)
+    if (port != 0 && this->isPortAvailable(port))
     {
         this->m_mutex.lock();
         this->m_listeningPort = port;
@@ -68,9 +102,16 @@ void Server::setListeningPort(quint16 port)
 
     else
     {
-        debugger->error("Server: not a valid listening port");
+        debugger->error(QString("Server: %1 = invalid listening port or port is already taken").arg(QString::number(port)));
         debugger->notice("Server: listening port unchanged");
     }
+}
+
+void Server::setListeningPortUnsafe(const quint16 &port)
+{
+    QMutexLocker(&this->m_mutex);
+    this->m_listeningPort = port;
+    this->m_httpServerSettings->port = port;
 }
 
 void Server::start()
@@ -175,6 +216,12 @@ bool ServerDBusAdapter::reload()
     return this->d->isRunning();
 }
 
+bool ServerDBusAdapter::isPortAvailable(const quint16 &port)
+{
+    QMutexLocker(&this->m_mutex);
+    return Server::isPortAvailable(port);
+}
+
 bool ServerDBusAdapter::setAddress(const QString &address)
 {
     debugger->notice("D-Bus: Trying to change server address...");
@@ -197,14 +244,18 @@ bool ServerDBusAdapter::setAddress(const QString &address)
 bool ServerDBusAdapter::setPort(const quint16 &port)
 {
     QMutexLocker(&this->m_mutex);
-    QTcpSocket socket;
 
-    debugger->notice("D-Bus: Trying to change server port...");
+    debugger->notice(QString("D-Bus: Trying to change server port to %1...").arg(QString::number(port)));
 
-    if (socket.bind(port))
+    if (port == this->d->listeningPort())
     {
-        socket.close();
-        this->d->setListeningPort(port);
+        debugger->notice("D-Bus: Port not changed. Ignoring.");
+        return true;
+    }
+
+    if (Server::isPortAvailable(port))
+    {
+        this->d->setListeningPortUnsafe(port);
         debugger->notice("D-Bus: Server port changed. Please reload the server for the changes to take effect.");
         return true;
     }
@@ -215,4 +266,14 @@ bool ServerDBusAdapter::setPort(const quint16 &port)
     }
 
     return false;
+}
+
+QString ServerDBusAdapter::address()
+{
+    return this->d->listeningAddress();
+}
+
+quint16 ServerDBusAdapter::port()
+{
+    return this->d->listeningPort();
 }

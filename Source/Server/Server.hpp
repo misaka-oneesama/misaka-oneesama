@@ -28,11 +28,16 @@ public:
         ServerNotConfigured = 0
     };
 
+    static bool isPortAvailable(const quint16 &port);
     bool isRunning() const;
+
+    const QString &listeningAddress() const;
+    const quint16 &listeningPort() const;
 
 public slots:
     void setListeningAddress(const QString &address);
-    void setListeningPort(quint16 port);
+    void setListeningPort(const quint16 &port);
+    void setListeningPortUnsafe(const quint16 &port); // prevent usage, doesn't check if port is available for bind
 
     void start();
     void stop();
@@ -75,8 +80,13 @@ public slots:
     Q_NOREPLY void stop();
     Q_SCRIPTABLE bool reload();
 
+    Q_SCRIPTABLE bool isPortAvailable(const quint16 &port);
+
     Q_SCRIPTABLE bool setAddress(const QString &address);
     Q_SCRIPTABLE bool setPort(const quint16 &port);
+
+    Q_SCRIPTABLE QString address();
+    Q_SCRIPTABLE quint16 port();
 
 private:
     QMutex m_mutex;

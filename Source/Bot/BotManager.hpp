@@ -2,6 +2,8 @@
 #define BOTMANAGER_HPP
 
 #include <QObject>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QDBusVariant>
 
 #include <QDiscord>
@@ -28,8 +30,8 @@ public:
         LoginFailed = 0
     };
 
-    void init(); // call AFTER `QThread::moveToThread()` !!
     void setOAuthToken(const QString &token);
+    const QString &token() const;
 
 public slots:
     void login();
@@ -51,6 +53,8 @@ signals:
     void stopped();
 
 private:
+    QMutex m_mutex;
+
     std::unique_ptr<QDiscord> m_discord;
     std::unique_ptr<DiscordEventHandler> m_eventHandler;
 
@@ -68,8 +72,15 @@ public:
 public slots:
     Q_NOREPLY void start();
     Q_NOREPLY void stop();
+    Q_SCRIPTABLE bool reload();
+
+    Q_NOREPLY void login();
+    Q_NOREPLY void logout();
+
+    Q_NOREPLY void setOAuthToken(const QString &token);
 
 private:
+    QMutex m_mutex;
     BotManager *d = nullptr;
 };
 

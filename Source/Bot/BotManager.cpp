@@ -7,18 +7,6 @@
 BotManager::BotManager(QObject *parent)
     : QObject(parent)
 {
-}
-
-BotManager::~BotManager()
-{
-    this->m_eventHandler.reset();
-    this->m_discord.reset();
-}
-
-void BotManager::init()
-{
-    // TODO: move the event handler to its own thread
-    // currently runs on the `main` thread
     this->m_discord.reset(new QDiscord());
     this->m_eventHandler.reset(new DiscordEventHandler(this->m_discord.get()));
 
@@ -28,9 +16,21 @@ void BotManager::init()
     QObject::connect(this->m_discord.get(), &QDiscord::disconnected, this, &BotManager::disconnected);
 }
 
+BotManager::~BotManager()
+{
+    this->m_eventHandler.reset();
+    this->m_discord.reset();
+}
+
 void BotManager::setOAuthToken(const QString &token)
 {
+    QMutexLocker(&this->m_mutex);
     this->m_token = token;
+}
+
+const QString &BotManager::token() const
+{
+    return this->m_token;
 }
 
 void BotManager::login()
@@ -74,7 +74,7 @@ void BotManager::loggedOut()
 
 void BotManager::disconnected()
 {
-    debugger->notice("BotManager: WebSocket closed by host. Session no longer valid or other network error");
+    debugger->notice("BotManager: WebSocket closed by host. Session no longer valid or other network error.");
     debugger->notice("BotManager: Reconnecting...");
     emit notify(Disconnected);
 }
@@ -99,4 +99,28 @@ void BotManagerDBusAdapter::start()
 void BotManagerDBusAdapter::stop()
 {
     this->d->stop();
+}
+
+// FIXME: doesn't work, some kind of delay required
+bool BotManagerDBusAdapter::reload()
+{
+    QMutexLocker(&this->m_mutex);
+    this->d->logout();
+    this->d->login();
+    return true; // FIXME: check if login was successful
+}
+
+void BotManagerDBusAdapter::login()
+{
+    this->d->login();
+}
+
+void BotManagerDBusAdapter::logout()
+{
+    this->d->logout();
+}
+
+void BotManagerDBusAdapter::setOAuthToken(const QString &token)
+{
+    this->d->setOAuthToken(token);
 }
