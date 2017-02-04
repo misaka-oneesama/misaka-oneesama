@@ -92,6 +92,7 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
 
 ## TODO list
 
+ - [ ] Refactor `ConfigManager` to use SQLite3 instead of raw binary serialization
  - [ ] Implement Bot Core
    - [x] Discord login and WebSocket communication
    - [ ] Implement a event handler for all the different Discord events
@@ -101,8 +102,8 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
      - [x] D-Bus interfaces
      - [ ] Error handling and process respawning
      - [ ] Testing if everything works...
-   - [x] Handle UNIX signals ~~(use C preprocessor to exclude Windows)~~
-     - [x] Clean up and process termination
+  - [x] Handle UNIX signals ~~(use C preprocessor to exclude Windows)~~
+   - [x] Clean up and process termination
  - [x] Implement basic HTTP server
    - [x] Improve QtWebApp (`HttpServer` module)
      - [x] use alternative config store [`QSettings` spams unnecessary useless files to disk]
