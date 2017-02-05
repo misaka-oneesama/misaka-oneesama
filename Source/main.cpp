@@ -17,11 +17,11 @@
 #include <Core/DBusInterface.hpp>
 
 std::unique_ptr<QCoreApplication> a;
-IpcProcess::InstanceType instance;
+InstanceType instance;
 
 void terminate(int)
 {
-    std::cout << "---" << IpcProcess::instanceName(instance) << ": signal received, preparing to terminate...." << std::endl;
+    std::cout << "---" << instanceName(instance) << ": signal received, preparing to terminate...." << std::endl;
 
     if (server) server->stop();
     if (botManager) botManager->stop();
@@ -53,11 +53,11 @@ int main(int argc, char **argv)
         if (inst.size() > 11 && inst.startsWith("--instance="))
         {
             if (inst.mid(11) == "master")
-                instance = IpcProcess::InstanceType::Master;
+                instance = InstanceType::Master;
             else if (inst.mid(11) == "server")
-                instance = IpcProcess::InstanceType::Server;
+                instance = InstanceType::Server;
             else if (inst.mid(11) == "bot")
-                instance = IpcProcess::InstanceType::Bot;
+                instance = InstanceType::Bot;
             else
             {
                 std::cerr << "---App: unkown instance type '" << inst.mid(11).toUtf8().constData() << "'" << std::endl;
@@ -68,22 +68,22 @@ int main(int argc, char **argv)
 
         else
         {
-            instance = IpcProcess::InstanceType::Master;
+            instance = InstanceType::Master;
         }
     }
 
     else
     {
-        instance = IpcProcess::InstanceType::Master;
+        instance = InstanceType::Master;
     }
 
-    std::cout << "---App: instance [" << IpcProcess::instanceName(instance) << "] selected." << std::endl;
+    std::cout << "---App: instance [" << instanceName(instance) << "] selected." << std::endl;
 
     // Check if the D-Bus daemon is running
     if (!QDBusConnection::sessionBus().isConnected()) {
-        std::cerr << "---" << IpcProcess::instanceName(instance) << ": unable to connect to the message bus!" << '\n'
-                  << "---" << IpcProcess::instanceName(instance) << ": make sure that the D-Bus daemon is running." << std::endl;
-        std::cerr << "---" << IpcProcess::instanceName(instance) << qUtf8Printable(QDBusConnection::sessionBus().lastError().message()) << std::endl;
+        std::cerr << "---" << instanceName(instance) << ": unable to connect to the message bus!" << '\n'
+                  << "---" << instanceName(instance) << ": make sure that the D-Bus daemon is running." << std::endl;
+        std::cerr << "---" << instanceName(instance) << qUtf8Printable(QDBusConnection::sessionBus().lastError().message()) << std::endl;
 
         a.reset();
         std::exit(2);
@@ -97,9 +97,9 @@ int main(int argc, char **argv)
             | QDBusConnection::ExportAllContents;
 
     // Register signal handlers
-    if (instance == IpcProcess::InstanceType::Master)
+    if (instance == InstanceType::Master)
     {
-        std::cout << "---" << IpcProcess::instanceName(instance) << ": registering signals SIGINT, SIGTERM, SIGQUIT, SIGSEGV and SIGILL..." << std::endl;
+        std::cout << "---" << instanceName(instance) << ": registering signals SIGINT, SIGTERM, SIGQUIT, SIGSEGV and SIGILL..." << std::endl;
         signal(SIGINT, terminate);
         signal(SIGTERM, terminate);
         signal(SIGQUIT, terminate);
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
     else
     {
-        std::cout << "---" << IpcProcess::instanceName(instance) << ": registering signals SIGINT, SIGTERM and SIGQUIT..." << std::endl;
+        std::cout << "---" << instanceName(instance) << ": registering signals SIGINT, SIGTERM and SIGQUIT..." << std::endl;
         signal(SIGINT, terminate);
         signal(SIGTERM, terminate);
         signal(SIGQUIT, terminate);
@@ -122,9 +122,9 @@ int main(int argc, char **argv)
     }
 
     debugger = new Debugger(!silent);
-    debugger->setFilenamePrefix(IpcProcess::instanceName(instance));
+    debugger->setFilenamePrefix(instanceName(instance));
 
-    if (instance == IpcProcess::InstanceType::Master)
+    if (instance == ItMaster)
     {
         // Initialize configuration
         if (!silent)
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
         //QDBusServiceWatcher serviceWatcher(dbus_service_name, QDBusConnection::sessionBus(), QDBusServiceWatcher::WatchForRegistration);
         //QObject::connect(&serviceWatcher, &QDBusServiceWatcher::serviceRegistered, );
 
-        if (!QDBusConnection::sessionBus().registerService(dbus_service_name))
+        if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItMaster)))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
 
@@ -186,53 +186,53 @@ int main(int argc, char **argv)
         }
 
         debugger->notice("IPC: Starting server instance...");
-        ipcServer = new IpcProcess(a.get());
-        ipcServer->setIdentifier(IpcProcess::InstanceType::Server);
-        ipcServer->redirectOutput(configManager->debuggerPrintToTerminal());
+        createIpcProcess(ItServer, a.get());
+        ipc(ItServer)->setIdentifier(ItServer);
+        ipc(ItServer)->redirectOutput(configManager->debuggerPrintToTerminal());
         //QObject::connect(ipcServer, static_cast<void(IpcProcess::*)(int, IpcProcess::ExitStatus)>(&IpcProcess::finished), ipcServer, &IpcProcess::deleteLater);
-        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipcServer, &IpcProcess::terminate);
-        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipcServer, &IpcProcess::deleteLater);
-        ipcServer->setProgram(a->arguments().at(0));
-        ipcServer->setArguments(QStringList({"--instance=server",
+        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItServer), &IpcProcess::terminate);
+        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItServer), &IpcProcess::deleteLater);
+        ipc(ItServer)->setProgram(a->arguments().at(0));
+        ipc(ItServer)->setArguments(QStringList({"--instance=server",
             "--listen=" + configManager->serverListeningAddress(),
             "--port=" + QString::number(configManager->serverListeningPort()),
             "--silent",
             configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
             "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
             "--log-dir=" + debugger->logDir()}));
-        ipcServer->start(IpcProcess::ReadOnly);
+        ipc(ItServer)->start(IpcProcess::ReadOnly);
         debugger->notice("IPC: Server instance started.");
 
         debugger->notice("IPC: Starting bot instance...");
-        ipcBot = new IpcProcess(a.get());
-        ipcBot->setIdentifier(IpcProcess::InstanceType::Bot);
-        ipcBot->redirectOutput(configManager->debuggerPrintToTerminal());
+        createIpcProcess(ItBot, a.get());
+        ipc(ItBot)->setIdentifier(ItBot);
+        ipc(ItBot)->redirectOutput(configManager->debuggerPrintToTerminal());
         //QObject::connect(ipcBot, static_cast<void(IpcProcess::*)(int, IpcProcess::ExitStatus)>(&IpcProcess::finished), ipcBot, &IpcProcess::deleteLater);
-        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipcBot, &IpcProcess::terminate);
-        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipcBot, &IpcProcess::deleteLater);
-        ipcBot->setProgram(a->arguments().at(0));
-        ipcBot->setArguments(QStringList({"--instance=bot",
+        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItBot), &IpcProcess::terminate);
+        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItBot), &IpcProcess::deleteLater);
+        ipc(ItBot)->setProgram(a->arguments().at(0));
+        ipc(ItBot)->setArguments(QStringList({"--instance=bot",
             "--token=" + configManager->token(),
             "--silent",
             configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
             "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
             "--log-dir=" + debugger->logDir()}));
-        //ipcBot->start(IpcProcess::ReadOnly);
+        //ipc(ItBot)->start(IpcProcess::ReadOnly);
         debugger->notice("IPC: Bot instance started.");
 
         debugger->notice("Registering D-Bus service...");
         DBusInterface *dbus_iface = new DBusInterface();
-        dbus_iface->setServerProcess(ipcServer);
-        dbus_iface->setBotProcess(ipcBot);
+        dbus_iface->setServerProcess(ipc(ItServer));
+        dbus_iface->setBotProcess(ipc(ItBot));
 
-        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name, dbus_iface, dbus_flags))
+        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItMaster), dbus_iface, dbus_flags))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
             a->quit();
         }
     }
 
-    else if (instance == IpcProcess::InstanceType::Server)
+    else if (instance == ItServer)
     {
         std::cout << "---App: starting server process..." << std::endl;
         std::fclose(stdin);
@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 
         if (argc < 3) // FIXME!!
         {
-            std::cerr << IpcProcess::instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
+            std::cerr << instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
             a.reset();
             delete configManager;
             delete debugger;
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
 
-        QDBusInterface iface(dbus_service_name, "/", "", QDBusConnection::sessionBus());
+        QDBusInterface iface(DBusServiceName(ItMaster), "/", "", QDBusConnection::sessionBus());
         if (!iface.isValid())
         {
             debugger->error("D-Bus: the master process interface couldn't be found!");
@@ -273,13 +273,13 @@ int main(int argc, char **argv)
         QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
         QObject::connect(server, &Server::stopped, a.get(), &QCoreApplication::quit);
 
-        if (!QDBusConnection::sessionBus().registerService(dbus_service_name_server))
+        if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItServer)))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
             failed = true;
         }
 
-        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name_server, server_dbus, dbus_flags))
+        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItServer), server_dbus, dbus_flags))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
             failed = true;
@@ -298,7 +298,7 @@ int main(int argc, char **argv)
         QTimer::singleShot(0, server, &Server::start);
     }
 
-    else if (instance == IpcProcess::InstanceType::Bot)
+    else if (instance == ItBot)
     {
         std::cout << "---App: starting bot process..." << std::endl;
         std::fclose(stdin);
@@ -307,7 +307,7 @@ int main(int argc, char **argv)
 
         if (argc < 3) // FIXME!
         {
-            std::cerr << IpcProcess::instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
+            std::cerr << instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
             a.reset();
             delete configManager;
             delete debugger;
@@ -319,7 +319,7 @@ int main(int argc, char **argv)
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
 
-        QDBusInterface iface(dbus_service_name, "/", "", QDBusConnection::sessionBus());
+        QDBusInterface iface(DBusServiceName(ItMaster), "/", "", QDBusConnection::sessionBus());
         if (!iface.isValid())
         {
             debugger->error("D-Bus: the master process interface couldn't be found!");
@@ -346,13 +346,13 @@ int main(int argc, char **argv)
         QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);
         QObject::connect(botManager, &BotManager::stopped, a.get(), &QCoreApplication::quit);
 
-        if (!QDBusConnection::sessionBus().registerService(dbus_service_name_bot))
+        if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItBot)))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
             failed = true;
         }
 
-        if (!QDBusConnection::sessionBus().registerObject("/", dbus_service_name_bot, botManager_dbus, dbus_flags))
+        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItBot), botManager_dbus, dbus_flags))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
             failed = true;
@@ -377,6 +377,6 @@ int main(int argc, char **argv)
     delete configManager;
     delete debugger;
 
-    std::cout << "---" << IpcProcess::instanceName(instance) << ": procss exited with code " << status << std::endl;
+    std::cout << "---" << instanceName(instance) << ": procss exited with code " << status << std::endl;
     return status;
 }

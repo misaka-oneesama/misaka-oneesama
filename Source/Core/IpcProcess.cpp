@@ -1,5 +1,4 @@
 #include "IpcProcess.hpp"
-#include <Global.hpp>
 
 #include <QMetaMethod>
 
@@ -50,8 +49,7 @@ void IpcProcess::terminate()
 {
     QMutexLocker(&this->m_mutex);
 
-    debugger->notice(QString("IpcProcess: process %1 received SIGTERM").arg(
-                         this->instanceName(this->m_id)));
+    debugger->notice(QString("IpcProcess: process %1 received SIGTERM").arg(instanceName(this->m_id)));
 
     QProcess::terminate();
     if (!this->waitForFinished())
@@ -63,27 +61,26 @@ void IpcProcess::terminate()
 void IpcProcess::processStandardOutput()
 {
     QMutexLocker(&this->m_mutex);
-    std::cout << this->instanceName(this->m_id) << ": " << this->readAllStandardOutput().constData() << std::flush;
+    std::cout << instanceName(this->m_id) << ": " << this->readAllStandardOutput().constData() << std::flush;
 }
 
 void IpcProcess::processStandardError()
 {
     QMutexLocker(&this->m_mutex);
-    std::cerr << this->instanceName(this->m_id) << ": " << this->readAllStandardError().constData() << std::flush;
+    std::cerr << instanceName(this->m_id) << ": " << this->readAllStandardError().constData() << std::flush;
 }
 
 void IpcProcess::processFinished(int exitCode, QProcess::ExitStatus status)
 {
     (void) status;
     debugger->notice(QString("IpcProcess: process %1 exited with status %2").arg(
-                         this->instanceName(this->m_id),
+                         instanceName(this->m_id),
                          QString::number(exitCode)));
 }
 
 void IpcProcess::handleError(QProcess::ProcessError error)
 {
-    debugger->error(QString("IpcProcess: error occurred in process %1").arg(
-                        this->instanceName(this->m_id)));
+    debugger->error(QString("IpcProcess: error occurred in process %1").arg(instanceName(this->m_id)));
 
     if (error == QProcess::Crashed)
     {

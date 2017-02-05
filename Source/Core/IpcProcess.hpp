@@ -1,6 +1,8 @@
 #ifndef IPCPROCESS_HPP
 #define IPCPROCESS_HPP
 
+#include <Global.hpp>
+
 #include <QProcess>
 #include <QMutexLocker>
 #include <QMutex>
@@ -12,24 +14,6 @@ class IpcProcess : public QProcess
 public:
     explicit IpcProcess(QObject *parent = nullptr);
     virtual ~IpcProcess();
-
-    enum class InstanceType : quint8 {
-        Master = 0,
-        Server = 1,
-        Bot    = 2
-    };
-
-    static auto instanceName(const InstanceType &type)
-    {
-        switch (type)
-        {
-            case InstanceType::Master: return "Master"; break;
-            case InstanceType::Server: return "Server"; break;
-            case InstanceType::Bot:    return "Bot"; break;
-        }
-
-        return "";
-    }
 
     void setIdentifier(const InstanceType &id);
 
@@ -49,7 +33,7 @@ public slots:
 
 private:
     QMutex m_mutex;
-    InstanceType m_id = InstanceType::Master;
+    InstanceType m_id = InstanceType::None;
 };
 
 #endif // IPCPROCESS_HPP

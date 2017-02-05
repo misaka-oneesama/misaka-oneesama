@@ -11,9 +11,9 @@
 RequestMapper::RequestMapper(QObject *parent)
     : HttpRequestHandler(parent)
 {
-    this->m_ifaceMaster.reset(new QDBusInterface(dbus_service_name, "/", "", QDBusConnection::sessionBus()));
-    this->m_ifaceServer.reset(new QDBusInterface(dbus_service_name_server, "/", "", QDBusConnection::sessionBus()));
-    this->m_ifaceBot.reset(new QDBusInterface(dbus_service_name_bot, "/", "", QDBusConnection::sessionBus()));
+    this->m_ifaceMaster.reset(new QDBusInterface(DBusServiceName(InstanceType::Master), "/", "", QDBusConnection::sessionBus()));
+    this->m_ifaceServer.reset(new QDBusInterface(DBusServiceName(InstanceType::Server), "/", "", QDBusConnection::sessionBus()));
+    this->m_ifaceBot.reset(new QDBusInterface(DBusServiceName(InstanceType::Bot), "/", "", QDBusConnection::sessionBus()));
 
     debugger->notice("RequestMapper created");
 }
