@@ -140,25 +140,27 @@ int main(int argc, char **argv)
         debugger->printToTerminal(configManager->debuggerPrintToTerminal()); // true for debug builds, false otherwise
         debugger->setEnabled(true);
 
-        // Load the OAuth token from an individual file
+        // Load the OAuth token from an individual file ("$config_path/token")
         bool hasToken = false;
         QFile tokenFile(configManager->configPath() + "/token");
         if (tokenFile.exists() && tokenFile.open(QFile::ReadOnly | QFile::Text))
         {
-            // create a file in "$config_path/token" and paste your bots token here
-            // file MUST NOT END WITH A NEWLINE and MUST BE UTF-8 ENCODED!!!
-            configManager->setOAuthToken(tokenFile.readAll().constData());
+            // fix permissions
+            tokenFile.setPermissions(QFile::ReadOwner | QFile::WriteOwner);
+
+            // contents will be trimmed, file should be UTF-8 encoded
+            configManager->setOAuthToken(tokenFile.readAll().trimmed().constData());
             tokenFile.close();
             hasToken = true;
         }
 
-        if (!hasToken || configManager->token().isEmpty())
+        if (!hasToken || configManager->token().size() < 30) // TODO/RESEARCH: is the token always 59 chars long, can it be any shorter or larger?
         {
             debugger->error("No OAuth token found!");
             std::cerr << "---App: No OAuth token found!" << "\n\n"
                       << " Please paste your bot's token in the following file, create it if it doesn't exists." << '\n'
                       << " --> " << qUtf8Printable(configManager->configPath()) << "/token" << '\n'
-                      << " Make sure the file doesn't end with a new line and is UTF-8 encoded."
+                      << " Recommended: Make sure the file doesn't end with a new line and is UTF-8 encoded."
                       << std::endl;
 
             a.reset();
@@ -237,6 +239,15 @@ int main(int argc, char **argv)
 
         bool failed = false;
 
+        if (argc < 3) // FIXME!!
+        {
+            std::cerr << IpcProcess::instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
+            a.reset();
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
+
         debugger->setMaxLogFilesToKeep(a->arguments().at(6).mid(10).toInt());
         debugger->setLogDir(a->arguments().at(7).mid(10));
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
@@ -293,6 +304,15 @@ int main(int argc, char **argv)
         std::fclose(stdin);
 
         bool failed = false;
+
+        if (argc < 3) // FIXME!
+        {
+            std::cerr << IpcProcess::instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
+            a.reset();
+            delete configManager;
+            delete debugger;
+            std::exit(1);
+        }
 
         debugger->setMaxLogFilesToKeep(a->arguments().at(5).mid(10).toInt());
         debugger->setLogDir(a->arguments().at(6).mid(10));

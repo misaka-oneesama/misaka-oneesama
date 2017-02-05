@@ -93,7 +93,10 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
 
 ## TODO list
 
- - [x] Refactor `ConfigManager` to use SQLite3 instead of raw binary serialization
+ - [ ] Refactoring and general improvements, fix spaghetti code from early development!!
+   - [x] Refactor `ConfigManager` to use SQLite3 instead of raw binary serialization
+   - [ ] Refactor `main.cpp`. Toooooo much code redundancy, inefficient and unreadable.
+   - [ ] Refactor and improve `Server` and `BotManager` signals and slots and overall structure.
  - [ ] Implement Bot Core
    - [x] Discord login and WebSocket communication
    - [ ] Implement a event handler for all the different Discord events
