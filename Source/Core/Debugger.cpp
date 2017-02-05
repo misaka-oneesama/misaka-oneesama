@@ -13,22 +13,20 @@
 
 #include <iostream>
 
-Debugger::Debugger(bool output)
+Debugger::Debugger()
 {
-    this->m_output = output;
 }
 
-Debugger::Debugger(const QString &logDir, bool output)
-    : Debugger(output)
+Debugger::Debugger(const QString &logDir)
+    : Debugger()
 {
     this->setLogDir(logDir);
 }
 
-Debugger::Debugger(const QString &logDir, bool enabled, bool output)
+Debugger::Debugger(const QString &logDir, bool enabled)
     : Debugger(logDir)
 {
     this->m_enabled = enabled;
-    this->m_output = output;
 }
 
 Debugger::~Debugger()
@@ -55,11 +53,7 @@ bool Debugger::setLogDir(const QString &logDir)
         {
             if (parent.mkdir(this->m_logDir.dirName()))
             {
-                if (this->m_output)
-                {
-                    std::cerr << "Debugger: log directory created" << std::endl;
-                }
-
+                std::cerr << "Debugger: log directory created" << std::endl;
                 this->m_valid = true;
             }
         }
@@ -72,18 +66,12 @@ bool Debugger::setLogDir(const QString &logDir)
 
     if (this->m_valid)
     {
-        if (this->m_output)
-        {
-            std::cerr << "Debugger: log directory set to '" << qUtf8Printable(this->m_logDir.absolutePath()) << "'" << std::endl;
-        }
+        std::cerr << "Debugger: log directory set to '" << qUtf8Printable(this->m_logDir.absolutePath()) << "'" << std::endl;
     }
 
     else
     {
-        if (this->m_output)
-        {
-            std::cerr << "Debugger: given log directory is not valid: " << qUtf8Printable(this->m_logDir.absolutePath()) << std::endl;
-        }
+        std::cerr << "Debugger: given log directory is not valid: " << qUtf8Printable(this->m_logDir.absolutePath()) << std::endl;
     }
 
     return this->m_valid;
@@ -107,11 +95,7 @@ void Debugger::setEnabled(bool enabled)
         {
             for (int i = 0; i < logs.count() - this->m_maxLogFiles; i++)
             {
-                if (this->m_output)
-                {
-                    std::cout << "Old log file removed: " << qUtf8Printable(logs.at(i).absoluteFilePath()) << std::endl;
-                }
-
+                std::cout << "Old log file removed: " << qUtf8Printable(logs.at(i).absoluteFilePath()) << std::endl;
                 QFile::remove(logs.at(i).absoluteFilePath());
             }
         }
@@ -122,10 +106,7 @@ void Debugger::setEnabled(bool enabled)
         {
             this->m_logStream.setDevice(this->m_logFile.get());
 
-            if (this->m_output)
-            {
-                std::cerr << "Debugger: new log file " << qUtf8Printable(this->m_logFile->fileName()) << std::endl;
-            }
+            std::cerr << "Debugger: new log file " << qUtf8Printable(this->m_logFile->fileName()) << std::endl;
 
             this->m_logStream << qApp->applicationName() << " " << qApp->applicationVersion();
 
@@ -151,10 +132,7 @@ void Debugger::setEnabled(bool enabled)
             this->m_logFile->close();
             this->m_logFile.reset();
 
-            if (this->m_output)
-            {
-                std::cerr << "Debugger: unable to create log file" << std::endl;
-            }
+            std::cerr << "Debugger: unable to create log file" << std::endl;
         }
     }
 }

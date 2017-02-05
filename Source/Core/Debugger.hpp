@@ -12,9 +12,9 @@
 class Debugger
 {
 public:
-    Debugger(bool output = true);
-    Debugger(const QString &logDir, bool output = true);
-    Debugger(const QString &logDir, bool enabled, bool output = true);
+    Debugger();
+    Debugger(const QString &logDir);
+    Debugger(const QString &logDir, bool enabled);
     ~Debugger();
 
     bool setLogDir(const QString &logDir);
@@ -31,7 +31,6 @@ public:
     void error(const QString&);
 
 private:
-    bool m_output = true;
     QDir m_logDir;
     std::unique_ptr<QFile> m_logFile;
     QTextStream m_logStream;

@@ -1,4 +1,5 @@
 #include <QCoreApplication>
+#include <QCommandLineParser>
 #include <QThread>
 
 #include <QDBusConnection>
@@ -34,7 +35,7 @@ void signal_terminate(int)
     a->quit();
 }
 
-void terminate(quint8 exitCode)
+Q_NORETURN void terminate(quint8 exitCode)
 {
     a.reset();
     delete configManager;
@@ -45,7 +46,7 @@ void terminate(quint8 exitCode)
     std::exit(exitCode);
 }
 
-void terminate(TerminateReason reason)
+Q_NORETURN void terminate(TerminateReason reason)
 {
     terminate(static_cast<quint8>(reason));
 }
@@ -65,33 +66,84 @@ int main(int argc, char **argv)
     threadMain = QThread::currentThread();
     threadMain->setUserData(0, threadId);
 
-    bool silent = a->arguments().contains("--silent");
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Legend: [a]=All Instances, [i]=Only childs of master, [m]=Master, [s]=Server, [b]=Bot");
+    parser.addOptions({
+        /// Explicitly override the "help" and "version" options. The parser handles them internally,
+        /// even when not calling `add{Help,Version}Option` they are added anyway. Because QCoreApplication
+        /// is created at the heap and is managed by a smart pointer, the parser just makes the app SIGSEGV.
+        {{"h", "help"},             "Displays this help."},
+        {{"v", "version"},          "Displays version information."},
 
-    if (!silent)
+        /// Program options
+        {{"i", "instance"},         "[a] Starts the appropriate instance. Valid instances are `master` (default), `server` and `bot`. "
+                                    "If no instance type is given `master` is selected.", "type"},
+        {"skip-server",             "[m] Don't start the server process during startup."},
+        {"skip-bot",                "[m] Don't start the bot process during startup."},
+        {{"n", "no-init-messages"}, "[a] Hides all unimportant startup messages."},
+        {"terminal-logging",        "[i] Prints all messages to the terminal. Warning! Degrades performance! [Synced and Blocking]"},
+        {"no-terminal-logging",     "[i] Disables terminal logging. Recommended in production."},
+        {"listen",                  "[s] Server listening address.", "address"},
+        {"port",                    "[s] Server listening port.", "port"},
+        {"token",                   "[b] Discord OAuth token. Must be a Bot token!", "token"},
+        {"log-max",                 "[i] Maximum number of old log files to keep. [autoremove]", "number"},
+        {"log-dir",                 "[i] Directory where to store log files. Must be an existing and writable directory.", "directory"}
+    });
+
+    if (!parser.parse(a->arguments()))
+    {
+        std::cout << qUtf8Printable(parser.errorText()) << std::endl;
+        a.reset();
+        return reasonToInt(TerminateReason::CommandLineParsingError);
+    }
+
+    if (parser.isSet("help"))
+    {
+        std::cout << qUtf8Printable(parser.helpText()) << std::endl;
+        a.reset();
+        return 0;
+    }
+
+    bool quitAfterShowVersion = parser.isSet("version");
+    bool silent = parser.isSet("no-init-messages");
+
+    if (!silent || quitAfterShowVersion)
     {
         std::cout << "〔" << a->applicationName().toUtf8().constData() << "〕─"
                   << "〔" << a->applicationVersion().toUtf8().constData() << "〕\n"
                   << std::endl;
+
+        if (quitAfterShowVersion)
+        {
+            a.reset();
+            return 0;
+        }
     }
 
     // Determine instance type
-    if (a->arguments().size() > 1)
+    if (parser.isSet("instance"))
     {
-        const QString inst = a->arguments().at(1);
+        const QString &inst = parser.value("instance");
 
-        if (inst.size() > 11 && inst.startsWith("--instance="))
+        if (QString::compare(inst, "master", Qt::CaseInsensitive) == 0)
         {
-            if (inst.mid(11) == "master")
-                instance = ItMaster;
-            else if (inst.mid(11) == "server")
-                instance = ItServer;
-            else if (inst.mid(11) == "bot")
-                instance = ItBot;
-            else
-            {
-                std::cerr << "---App: unkown instance type '" << inst.mid(11).toUtf8().constData() << "'" << std::endl;
-                terminate(TerminateReason::UnknownInstanceType);
-            }
+            instance = ItMaster;
+        }
+
+        else if (QString::compare(inst, "server", Qt::CaseInsensitive) == 0)
+        {
+            instance = ItServer;
+        }
+
+        else if (QString::compare(inst, "bot", Qt::CaseInsensitive) == 0)
+        {
+            instance = ItBot;
+        }
+
+        else
+        {
+            std::cerr << "---App: unkown instance type '" << qUtf8Printable(inst) << "'" << std::endl;
+            terminate(TerminateReason::UnknownInstanceType);
         }
     }
 
@@ -115,12 +167,9 @@ int main(int argc, char **argv)
     std::signal(SIGILL, signal_terminate);
 
     // Initialize debugger
-    if (!silent)
-    {
-        std::cout << "---App: creating [class] Debugger..." << std::endl;
-    }
+    std::cout << "---" << instanceName(instance) << ": Initializing Debugger..." << std::endl;
 
-    debugger = new Debugger(!silent);
+    debugger = new Debugger();
     debugger->setFilenamePrefix(instanceName(instance));
 
     if (instance == ItMaster)
@@ -128,7 +177,7 @@ int main(int argc, char **argv)
         // Initialize configuration
         if (!silent)
         {
-            std::cout << "---App: creating [class] ConfigManager..." << std::endl;
+            std::cout << "---App: Initializing ConfigManager..." << std::endl;
         }
 
         configManager = new ConfigManager(!silent);
@@ -153,7 +202,7 @@ int main(int argc, char **argv)
             hasToken = true;
         }
 
-        if (!hasToken || configManager->token().size() < 30) // TODO/RESEARCH: is the token always 59 chars long, can it be any shorter or larger?
+        if (!hasToken || configManager->token().size() < 30) // TODO/RESEARCH: is the token always 59 chars long, can it be any shorter or longer?
         {
             debugger->error("No OAuth token found!");
             std::cerr << "---App: No OAuth token found!" << "\n\n"
@@ -167,6 +216,7 @@ int main(int argc, char **argv)
 
         std::cout << "---App: starting master process..." << std::endl;
 
+        // Register D-Bus service
         debugger->notice("Registering D-Bus service...");
         if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItMaster)))
         {
@@ -174,39 +224,64 @@ int main(int argc, char **argv)
             terminate(TerminateReason::DBusServiceRegistrationFailed);
         }
 
-        debugger->notice("IPC: Starting server instance...");
-        createIpcProcess(ItServer, a.get());
-        ipc(ItServer)->setIdentifier(ItServer);
-        ipc(ItServer)->redirectOutput(configManager->debuggerPrintToTerminal());
-        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItServer), &IpcProcess::terminate);
-        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItServer), &IpcProcess::deleteLater);
-        ipc(ItServer)->setProgram(a->arguments().at(0));
+        // Shared command line arguments across all instances
+        const QStringList sharedArgs({
+            "--no-init-messages",
+            configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
+            "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
+            "--log-dir=" + debugger->logDir()
+        });
+
+        ///
+        /// Server
+        ///
+
+        debugger->notice("IPC: Initializing server instance...");
+        createIpcProcess(ItServer, configManager, a.get());
+
         ipc(ItServer)->setArguments(QStringList({"--instance=server",
             "--listen=" + configManager->serverListeningAddress(),
-            "--port=" + QString::number(configManager->serverListeningPort()),
-            "--silent",
-            configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
-            "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
-            "--log-dir=" + debugger->logDir()}));
-        ipc(ItServer)->start(IpcProcess::ReadOnly);
-        debugger->notice("IPC: Server instance started.");
+            "--port=" + QString::number(configManager->serverListeningPort())
+        }) << sharedArgs);
 
-        debugger->notice("IPC: Starting bot instance...");
-        createIpcProcess(ItBot, a.get());
-        ipc(ItBot)->setIdentifier(ItBot);
-        ipc(ItBot)->redirectOutput(configManager->debuggerPrintToTerminal());
-        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItBot), &IpcProcess::terminate);
-        QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItBot), &IpcProcess::deleteLater);
-        ipc(ItBot)->setProgram(a->arguments().at(0));
+        if (!parser.isSet("skip-server"))
+        {
+            ipc(ItServer)->start(IpcProcess::ReadOnly);
+            debugger->notice("IPC: Server instance started.");
+        }
+
+        else
+        {
+            debugger->notice("IPC: Server instance startup skipped. Use D-Bus to start it at some later point.");
+        }
+
+        ///
+        /// Bot
+        ///
+
+        debugger->notice("IPC: Initializing bot instance...");
+        createIpcProcess(ItBot, configManager, a.get());
+
         ipc(ItBot)->setArguments(QStringList({"--instance=bot",
             "--token=" + configManager->token(),
-            "--silent",
-            configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
-            "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
-            "--log-dir=" + debugger->logDir()}));
-        //ipc(ItBot)->start(IpcProcess::ReadOnly);
-        debugger->notice("IPC: Bot instance started.");
+        }) << sharedArgs);
 
+        if (!parser.isSet("skip-bot"))
+        {
+            //ipc(ItBot)->start(IpcProcess::ReadOnly);
+            //debugger->notice("IPC: Bot instance started.");
+        }
+
+        else
+        {
+            debugger->notice("IPC: Bot instance startup skipped. Use D-Bus to start it at some later point.");
+        }
+
+        ///
+        /// D-Bus
+        ///
+
+        // Register D-Bus interface
         debugger->notice("Registering D-Bus interface...");
         DBusInterface *dbus_iface = new DBusInterface();
         dbus_iface->setServerProcess(ipc(ItServer));
@@ -230,7 +305,7 @@ int main(int argc, char **argv)
             terminate(TerminateReason::CommandLineParsingError);
         }
 
-        debugger->setMaxLogFilesToKeep(a->arguments().at(6).mid(10).toInt());
+        debugger->setMaxLogFilesToKeep(a->arguments().at(6).mid(10).toUShort());
         debugger->setLogDir(a->arguments().at(7).mid(10));
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
@@ -248,7 +323,7 @@ int main(int argc, char **argv)
         server = new Server();
         ServerDBusAdapter *server_dbus = new ServerDBusAdapter(server);
         server->setListeningAddress(a->arguments().at(2).mid(9));
-        server->setListeningPort(a->arguments().at(3).mid(7).toInt());
+        server->setListeningPort(a->arguments().at(3).mid(7).toUShort());
         QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
         QObject::connect(server, &Server::stopped, a.get(), &QCoreApplication::quit);
 
@@ -283,7 +358,7 @@ int main(int argc, char **argv)
             terminate(TerminateReason::CommandLineParsingError);
         }
 
-        debugger->setMaxLogFilesToKeep(a->arguments().at(5).mid(10).toInt());
+        debugger->setMaxLogFilesToKeep(a->arguments().at(5).mid(10).toUShort());
         debugger->setLogDir(a->arguments().at(6).mid(10));
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);

@@ -1,11 +1,20 @@
 #include "Global.hpp"
 
 #include <Core/IpcProcess.hpp>
+#include <Core/ConfigManager.hpp>
+
+#include <QCoreApplication>
 #include <QObject>
+#include <QMap>
 
 static const QString dbus_service_name = "moe.misaka_oneesama";
 static const QString dbus_service_name_server = dbus_service_name + ".Server";
 static const QString dbus_service_name_bot = dbus_service_name + ".Bot";
+
+quint8 Global::reasonToInt(const TerminateReason &reason)
+{
+    return static_cast<quint8>(reason);
+}
 
 const char *Global::instanceName(const InstanceType &type)
 {
@@ -21,27 +30,44 @@ const char *Global::instanceName(const InstanceType &type)
 Debugger *Global::debugger = nullptr;
 ConfigManager *Global::configManager = nullptr;
 
-IpcProcess *ipcServer = nullptr;
-IpcProcess *ipcBot = nullptr;
+QMap<InstanceType, IpcProcess*> ipcMap;
 
-void Global::createIpcProcess(const InstanceType &type, QObject *parent)
+void Global::createIpcProcess(const InstanceType &type, ConfigManager *configManager, QObject *parent)
 {
-    switch (type)
+//    switch (type)
+//    {
+//        case InstanceType::Server:
+//            ipcServer = new IpcProcess(parent);
+//            break;
+
+//        case InstanceType::Bot:
+//            ipcBot    = new IpcProcess(parent);
+//            break;
+
+//        default:
+//            break;
+//    }
+
+    // create new process instance
+    if (!ipcMap.contains(type))
     {
-        case InstanceType::Server: ipcServer = new IpcProcess(parent); break;
-        case InstanceType::Bot:    ipcBot    = new IpcProcess(parent); break;
-        default: break;
+        ipcMap.insert(type, new IpcProcess(parent));
+
+        // configure
+        ipcMap.value(type)->setProgram(qApp->arguments().at(0));
+        ipcMap.value(type)->setIdentifier(type);
+        ipcMap.value(type)->redirectOutput(configManager->debuggerPrintToTerminal());
+
+        // signal connections
+        QObject::connect(static_cast<QCoreApplication*>(parent), &QCoreApplication::aboutToQuit, ipcMap.value(type), &IpcProcess::terminate);
+        QObject::connect(static_cast<QCoreApplication*>(parent), &QCoreApplication::aboutToQuit, ipcMap.value(type), &IpcProcess::deleteLater);
     }
+
 }
 
 IpcProcess *Global::ipc(const InstanceType &type)
 {
-    switch (type)
-    {
-        case InstanceType::Server: return ipcServer; break;
-        case InstanceType::Bot:    return ipcBot; break;
-        default: return nullptr; break;
-    }
+    return ipcMap.contains(type) ? ipcMap.value(type) : nullptr;
 }
 
 Server *Global::server = nullptr;

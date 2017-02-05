@@ -10,6 +10,7 @@
 #include "Bot/BotManager.hpp"
 
 class IpcProcess;
+class ConfigManager;
 class QObject;
 
 namespace Global
@@ -17,7 +18,10 @@ namespace Global
 
     // list of exit codes
     enum class TerminateReason : quint8 {
-        UnknownError = 1,
+
+        // Uncategorized or unknown errors
+        UncategorizedError = 1,
+        UnknownError = 2,
 
         // Generic
         CommandLineParsingError = 3,
@@ -32,6 +36,8 @@ namespace Global
         // Configuration-based
         OAuthTokenNotFound = 12
     };
+
+    quint8 reasonToInt(const TerminateReason &reason);
 
     enum class InstanceType : quint8 {
         Master = 0x0,
@@ -57,7 +63,7 @@ namespace Global
     extern ConfigManager *configManager;
 
     // returns a pointer to the IPC process object, can ONLY be used in the [Master] instance
-    void createIpcProcess(const InstanceType &type, QObject *parent = nullptr);
+    void createIpcProcess(const InstanceType &type, ConfigManager *configManager, QObject *parent = nullptr);
     IpcProcess *ipc(const InstanceType &type);
 
     // can ONLY be used in the [Server] instance
