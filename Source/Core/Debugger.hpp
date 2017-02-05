@@ -13,12 +13,13 @@ class Debugger
 {
 public:
     Debugger(bool output = true);
-    Debugger(const QString &logDir);
-    Debugger(const QString &logDir, bool enabled);
+    Debugger(const QString &logDir, bool output = true);
+    Debugger(const QString &logDir, bool enabled, bool output = true);
     ~Debugger();
 
     bool setLogDir(const QString &logDir);
     const QString logDir() const;
+
     void setEnabled(bool);
     void setFilenamePrefix(const QString &prefix);
     void setMaxLogFilesToKeep(quint16);

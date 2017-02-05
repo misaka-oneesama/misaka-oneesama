@@ -14,20 +14,21 @@
 #include <iostream>
 
 Debugger::Debugger(bool output)
-    : m_output(output)
 {
+    this->m_output = output;
 }
 
-Debugger::Debugger(const QString &logDir)
-    : Debugger()
+Debugger::Debugger(const QString &logDir, bool output)
+    : Debugger(output)
 {
     this->setLogDir(logDir);
 }
 
-Debugger::Debugger(const QString &logDir, bool enabled)
+Debugger::Debugger(const QString &logDir, bool enabled, bool output)
     : Debugger(logDir)
 {
     this->m_enabled = enabled;
+    this->m_output = output;
 }
 
 Debugger::~Debugger()
@@ -106,7 +107,11 @@ void Debugger::setEnabled(bool enabled)
         {
             for (int i = 0; i < logs.count() - this->m_maxLogFiles; i++)
             {
-                std::cout << "Old log file removed: " << qUtf8Printable(logs.at(i).absoluteFilePath()) << std::endl;
+                if (this->m_output)
+                {
+                    std::cout << "Old log file removed: " << qUtf8Printable(logs.at(i).absoluteFilePath()) << std::endl;
+                }
+
                 QFile::remove(logs.at(i).absoluteFilePath());
             }
         }
@@ -116,7 +121,11 @@ void Debugger::setEnabled(bool enabled)
         if (this->m_logFile->open(QFile::WriteOnly | QFile::Text))
         {
             this->m_logStream.setDevice(this->m_logFile.get());
-            std::cerr << "Debugger: new log file " << qUtf8Printable(this->m_logFile->fileName()) << std::endl;
+
+            if (this->m_output)
+            {
+                std::cerr << "Debugger: new log file " << qUtf8Printable(this->m_logFile->fileName()) << std::endl;
+            }
 
             this->m_logStream << qApp->applicationName() << " " << qApp->applicationVersion();
 
@@ -142,7 +151,10 @@ void Debugger::setEnabled(bool enabled)
             this->m_logFile->close();
             this->m_logFile.reset();
 
-            std::cerr << "Debugger: unable to create log file" << std::endl;
+            if (this->m_output)
+            {
+                std::cerr << "Debugger: unable to create log file" << std::endl;
+            }
         }
     }
 }

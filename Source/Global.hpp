@@ -1,6 +1,8 @@
 #ifndef GLOBAL_HPP
 #define GLOBAL_HPP
 
+#include <QDBusConnection>
+
 #include "Core/Debugger.hpp"
 #include "Core/ConfigManager.hpp"
 
@@ -12,6 +14,24 @@ class QObject;
 
 namespace Global
 {
+
+    // list of exit codes
+    enum class TerminateReason : quint8 {
+        UnknownError = 1,
+
+        // Generic
+        CommandLineParsingError = 3,
+        UnknownInstanceType = 4,
+
+        // D-Bus
+        DBusConnectionError = 5,
+        DBusServiceConnectionError = 6,
+        DBusServiceRegistrationFailed = 7,
+        DBusObjectRegistrationFailed = 8,
+
+        // Configuration-based
+        OAuthTokenNotFound = 12
+    };
 
     enum class InstanceType : quint8 {
         Master = 0x0,
@@ -48,6 +68,13 @@ namespace Global
 
     // read-only strings of the D-Bus service names
     const QString &DBusServiceName(const InstanceType &type);
+
+    static const QDBusConnection::RegisterOptions DBusFlags =
+                 QDBusConnection::ExportAllSlots
+               | QDBusConnection::ExportAllSignals
+               | QDBusConnection::ExportAllProperties
+               | QDBusConnection::ExportAllInvokables
+               | QDBusConnection::ExportAllContents;
 
 } // namespace Global
 

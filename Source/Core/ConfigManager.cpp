@@ -55,17 +55,27 @@ ConfigManager::ConfigManager(bool output)
 
     if (this->m_db.open())
     {
-        std::cerr << "ConfigManager: SQLite3 database opened." << std::endl;
+        if (this->m_output)
+        {
+            std::cerr << "ConfigManager: SQLite3 database opened." << std::endl;
+        }
 
         if (!this->isValidDatabase())
         {
-            std::cerr << "ConfigManager: Creating/Fixing SQLite3 database..." << std::endl;
+            if (this->m_output)
+            {
+                std::cerr << "ConfigManager: Creating/Fixing SQLite3 database..." << std::endl;
+            }
+
             this->createDatabaseLayout();
         }
 
         else
         {
-            std::cerr << "ConfigManager: Database check passed." << std::endl;
+            if (this->m_output)
+            {
+                std::cerr << "ConfigManager: Database check passed." << std::endl;
+            }
         }
 
         this->m_validDb = true;
@@ -73,8 +83,11 @@ ConfigManager::ConfigManager(bool output)
 
     else
     {
-        std::cerr << "ConfigManager: unable to open the SQLite3 database!" << std::endl;
-        std::cerr << "ConfigManager: the hardcoded default configuration will be used instead." << std::endl;
+        if (this->m_output)
+        {
+            std::cerr << "ConfigManager: unable to open the SQLite3 database!" << std::endl;
+            std::cerr << "ConfigManager: the hardcoded default configuration will be used instead." << std::endl;
+        }
     }
 }
 
@@ -90,7 +103,10 @@ bool ConfigManager::isValid() const
 
 void ConfigManager::createDatabaseLayout()
 {
-    std::cerr << "ConfigManager: Creating tables..." << std::endl;
+    if (this->m_output)
+    {
+        std::cerr << "ConfigManager: Creating tables..." << std::endl;
+    }
 
     this->m_db.exec("CREATE TABLE `Core` ("
                     "`key` TEXT NOT NULL, "

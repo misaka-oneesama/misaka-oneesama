@@ -20,6 +20,8 @@ public:
     void setBotProcess(IpcProcess *bot);
 
 public slots:
+    Q_NOREPLY void terminate();
+
     Q_NOREPLY void startServer();
     Q_NOREPLY void stopServer();
     Q_NOREPLY void restartServer();

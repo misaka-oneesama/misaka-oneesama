@@ -1,4 +1,6 @@
 #include "DBusInterface.hpp"
+
+#include <QCoreApplication>
 #include <Global.hpp>
 
 DBusInterface::DBusInterface(QObject *parent)
@@ -20,6 +22,13 @@ void DBusInterface::setBotProcess(IpcProcess *bot)
 {
     QMutexLocker(&this->m_mutex);
     this->p_bot = bot;
+}
+
+void DBusInterface::terminate()
+{
+    QMutexLocker(&this->m_mutex);
+    debugger->notice("D-Bus: Terminating application...");
+    qApp->quit();
 }
 
 void DBusInterface::startServer()

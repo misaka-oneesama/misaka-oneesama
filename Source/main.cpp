@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include <QThread>
 
+#include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusServiceWatcher>
 #include <QDBusVariant>
@@ -8,18 +9,18 @@
 #include <QFile>
 
 #include <iostream>
+#include <cstdio>
 #include <csignal>
 #include <memory>
-#include <cstdio>
 
 #include <Global.hpp>
 #include <Core/IpcProcess.hpp>
 #include <Core/DBusInterface.hpp>
 
 std::unique_ptr<QCoreApplication> a;
-InstanceType instance;
+InstanceType instance = ItMaster;
 
-void terminate(int)
+void signal_terminate(int)
 {
     std::cout << "---" << instanceName(instance) << ": signal received, preparing to terminate...." << std::endl;
 
@@ -29,8 +30,25 @@ void terminate(int)
     a->quit();
 }
 
+void terminate(quint8 exitCode)
+{
+    a.reset();
+    delete configManager;
+    delete debugger;
+    std::exit(exitCode);
+}
+
+void terminate(TerminateReason reason)
+{
+    terminate(static_cast<quint8>(reason));
+}
+
 int main(int argc, char **argv)
 {
+    // Close input stream
+    std::fclose(stdin);
+
+    // Initialize QCoreApplication
     a.reset(new QCoreApplication(argc, argv));
     a->setApplicationName(QString::fromUtf8("御坂ーお姉さま"));
     a->setApplicationVersion(QLatin1String("v0.0.2"));
@@ -41,8 +59,9 @@ int main(int argc, char **argv)
 
     if (!silent)
     {
-        std::cout << a->applicationName().toUtf8().constData() << ' '
-                  << a->applicationVersion().toUtf8().constData() << '\n' << std::endl;
+        std::cout << "〔" << a->applicationName().toUtf8().constData() << "〕─"
+                  << "〔" << a->applicationVersion().toUtf8().constData() << "〕\n"
+                  << std::endl;
     }
 
     // Determine instance type
@@ -53,28 +72,17 @@ int main(int argc, char **argv)
         if (inst.size() > 11 && inst.startsWith("--instance="))
         {
             if (inst.mid(11) == "master")
-                instance = InstanceType::Master;
+                instance = ItMaster;
             else if (inst.mid(11) == "server")
-                instance = InstanceType::Server;
+                instance = ItServer;
             else if (inst.mid(11) == "bot")
-                instance = InstanceType::Bot;
+                instance = ItBot;
             else
             {
                 std::cerr << "---App: unkown instance type '" << inst.mid(11).toUtf8().constData() << "'" << std::endl;
-                a.reset();
-                std::exit(1);
+                terminate(TerminateReason::UnknownInstanceType);
             }
         }
-
-        else
-        {
-            instance = InstanceType::Master;
-        }
-    }
-
-    else
-    {
-        instance = InstanceType::Master;
     }
 
     std::cout << "---App: instance [" << instanceName(instance) << "] selected." << std::endl;
@@ -85,35 +93,16 @@ int main(int argc, char **argv)
                   << "---" << instanceName(instance) << ": make sure that the D-Bus daemon is running." << std::endl;
         std::cerr << "---" << instanceName(instance) << qUtf8Printable(QDBusConnection::sessionBus().lastError().message()) << std::endl;
 
-        a.reset();
-        std::exit(2);
+        terminate(TerminateReason::DBusConnectionError);
     }
-
-    const QDBusConnection::RegisterOptions dbus_flags =
-              QDBusConnection::ExportAllSlots
-            | QDBusConnection::ExportAllSignals
-            | QDBusConnection::ExportAllProperties
-            | QDBusConnection::ExportAllInvokables
-            | QDBusConnection::ExportAllContents;
 
     // Register signal handlers
-    if (instance == InstanceType::Master)
-    {
-        std::cout << "---" << instanceName(instance) << ": registering signals SIGINT, SIGTERM, SIGQUIT, SIGSEGV and SIGILL..." << std::endl;
-        signal(SIGINT, terminate);
-        signal(SIGTERM, terminate);
-        signal(SIGQUIT, terminate);
-        signal(SIGSEGV, terminate);
-        signal(SIGILL, terminate);
-    }
-
-    else
-    {
-        std::cout << "---" << instanceName(instance) << ": registering signals SIGINT, SIGTERM and SIGQUIT..." << std::endl;
-        signal(SIGINT, terminate);
-        signal(SIGTERM, terminate);
-        signal(SIGQUIT, terminate);
-    }
+    std::cout << "---" << instanceName(instance) << ": registering signals SIGINT, SIGTERM, SIGQUIT, SIGSEGV and SIGILL..." << std::endl;
+    std::signal(SIGINT, signal_terminate);
+    std::signal(SIGTERM, signal_terminate);
+    std::signal(SIGQUIT, signal_terminate);
+    std::signal(SIGSEGV, signal_terminate);
+    std::signal(SIGILL, signal_terminate);
 
     // Initialize debugger
     if (!silent)
@@ -163,33 +152,22 @@ int main(int argc, char **argv)
                       << " Recommended: Make sure the file doesn't end with a new line and is UTF-8 encoded."
                       << std::endl;
 
-            a.reset();
-            delete configManager;
-            delete debugger;
-            std::exit(1);
+            terminate(TerminateReason::OAuthTokenNotFound);
         }
 
         std::cout << "---App: starting master process..." << std::endl;
 
-        //debugger->notice("Registering D-Bus service...");
-        //QDBusServiceWatcher serviceWatcher(dbus_service_name, QDBusConnection::sessionBus(), QDBusServiceWatcher::WatchForRegistration);
-        //QObject::connect(&serviceWatcher, &QDBusServiceWatcher::serviceRegistered, );
-
+        debugger->notice("Registering D-Bus service...");
         if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItMaster)))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
-
-            a.reset();
-            delete configManager;
-            delete debugger;
-            std::exit(1);
+            terminate(TerminateReason::DBusServiceRegistrationFailed);
         }
 
         debugger->notice("IPC: Starting server instance...");
         createIpcProcess(ItServer, a.get());
         ipc(ItServer)->setIdentifier(ItServer);
         ipc(ItServer)->redirectOutput(configManager->debuggerPrintToTerminal());
-        //QObject::connect(ipcServer, static_cast<void(IpcProcess::*)(int, IpcProcess::ExitStatus)>(&IpcProcess::finished), ipcServer, &IpcProcess::deleteLater);
         QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItServer), &IpcProcess::terminate);
         QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItServer), &IpcProcess::deleteLater);
         ipc(ItServer)->setProgram(a->arguments().at(0));
@@ -207,7 +185,6 @@ int main(int argc, char **argv)
         createIpcProcess(ItBot, a.get());
         ipc(ItBot)->setIdentifier(ItBot);
         ipc(ItBot)->redirectOutput(configManager->debuggerPrintToTerminal());
-        //QObject::connect(ipcBot, static_cast<void(IpcProcess::*)(int, IpcProcess::ExitStatus)>(&IpcProcess::finished), ipcBot, &IpcProcess::deleteLater);
         QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItBot), &IpcProcess::terminate);
         QObject::connect(a.get(), &QCoreApplication::aboutToQuit, ipc(ItBot), &IpcProcess::deleteLater);
         ipc(ItBot)->setProgram(a->arguments().at(0));
@@ -220,32 +197,27 @@ int main(int argc, char **argv)
         //ipc(ItBot)->start(IpcProcess::ReadOnly);
         debugger->notice("IPC: Bot instance started.");
 
-        debugger->notice("Registering D-Bus service...");
+        debugger->notice("Registering D-Bus interface...");
         DBusInterface *dbus_iface = new DBusInterface();
         dbus_iface->setServerProcess(ipc(ItServer));
         dbus_iface->setBotProcess(ipc(ItBot));
 
-        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItMaster), dbus_iface, dbus_flags))
+        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItMaster), dbus_iface, DBusFlags))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
-            a->quit();
+            delete dbus_iface;
+            terminate(TerminateReason::DBusObjectRegistrationFailed);
         }
     }
 
     else if (instance == ItServer)
     {
         std::cout << "---App: starting server process..." << std::endl;
-        std::fclose(stdin);
-
-        bool failed = false;
 
         if (argc < 3) // FIXME!!
         {
             std::cerr << instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
-            a.reset();
-            delete configManager;
-            delete debugger;
-            std::exit(1);
+            terminate(TerminateReason::CommandLineParsingError);
         }
 
         debugger->setMaxLogFilesToKeep(a->arguments().at(6).mid(10).toInt());
@@ -253,46 +225,39 @@ int main(int argc, char **argv)
         debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
         debugger->setEnabled(true);
 
+        // Check if the master process is running and connected to D-Bus
         QDBusInterface iface(DBusServiceName(ItMaster), "/", "", QDBusConnection::sessionBus());
         if (!iface.isValid())
         {
             debugger->error("D-Bus: the master process interface couldn't be found!");
             debugger->error("D-Bus: refusing to start!");
             debugger->error("D-Bus: " + QDBusConnection::sessionBus().lastError().message());
-            a.reset();
-            delete configManager;
-            delete debugger;
-            std::exit(1);
+            terminate(TerminateReason::DBusServiceConnectionError);
         }
 
         server = new Server();
         ServerDBusAdapter *server_dbus = new ServerDBusAdapter(server);
         server->setListeningAddress(a->arguments().at(2).mid(9));
         server->setListeningPort(a->arguments().at(3).mid(7).toInt());
-        //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, server, &Server::stop);
         QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
         QObject::connect(server, &Server::stopped, a.get(), &QCoreApplication::quit);
 
         if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItServer)))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
-            failed = true;
-        }
-
-        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItServer), server_dbus, dbus_flags))
-        {
-            debugger->error(QDBusConnection::sessionBus().lastError().message());
-            failed = true;
-        }
-
-        if (failed)
-        {
             a.reset();
             delete server_dbus;
             delete server;
-            delete configManager;
-            delete debugger;
-            std::exit(1);
+            terminate(TerminateReason::DBusServiceRegistrationFailed);
+        }
+
+        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItServer), server_dbus, DBusFlags))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+            a.reset();
+            delete server_dbus;
+            delete server;
+            terminate(TerminateReason::DBusObjectRegistrationFailed);
         }
 
         QTimer::singleShot(0, server, &Server::start);
@@ -301,17 +266,11 @@ int main(int argc, char **argv)
     else if (instance == ItBot)
     {
         std::cout << "---App: starting bot process..." << std::endl;
-        std::fclose(stdin);
-
-        bool failed = false;
 
         if (argc < 3) // FIXME!
         {
             std::cerr << instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
-            a.reset();
-            delete configManager;
-            delete debugger;
-            std::exit(1);
+            terminate(TerminateReason::CommandLineParsingError);
         }
 
         debugger->setMaxLogFilesToKeep(a->arguments().at(5).mid(10).toInt());
@@ -325,16 +284,14 @@ int main(int argc, char **argv)
             debugger->error("D-Bus: the master process interface couldn't be found!");
             debugger->error("D-Bus: refusing to start!");
             debugger->error("D-Bus: " + QDBusConnection::sessionBus().lastError().message());
-            a.reset();
-            delete configManager;
-            delete debugger;
-            std::exit(1);
+            terminate(TerminateReason::DBusServiceConnectionError);
         }
 
         botManager = new BotManager();
         BotManagerDBusAdapter *botManager_dbus = new BotManagerDBusAdapter(botManager);
         botManager->setOAuthToken(a->arguments().at(2).mid(8));
 
+        // FIXME! is this secure enough?
         // remove OAuth token from argv (hides it from /proc/self/exe, ps ax, and other sources)
         std::size_t argvlen = strlen(argv[2]);
         for (std::size_t i = 8; i < argvlen; i++)
@@ -342,30 +299,25 @@ int main(int argc, char **argv)
             argv[2][i] = '*';
         }
 
-        //QObject::connect(a.get(), &QCoreApplication::aboutToQuit, botManager, &BotManager::stop);
         QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);
         QObject::connect(botManager, &BotManager::stopped, a.get(), &QCoreApplication::quit);
 
         if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItBot)))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
-            failed = true;
-        }
-
-        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItBot), botManager_dbus, dbus_flags))
-        {
-            debugger->error(QDBusConnection::sessionBus().lastError().message());
-            failed = true;
-        }
-
-        if (failed)
-        {
             a.reset();
             delete botManager_dbus;
             delete botManager;
-            delete configManager;
-            delete debugger;
-            std::exit(1);
+            terminate(TerminateReason::DBusServiceRegistrationFailed);
+        }
+
+        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItBot), botManager_dbus, DBusFlags))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+            a.reset();
+            delete botManager_dbus;
+            delete botManager;
+            terminate(TerminateReason::DBusObjectRegistrationFailed);
         }
 
         QTimer::singleShot(0, botManager, static_cast<void(BotManager::*)()>(&BotManager::login));
@@ -377,6 +329,6 @@ int main(int argc, char **argv)
     delete configManager;
     delete debugger;
 
-    std::cout << "---" << instanceName(instance) << ": procss exited with code " << status << std::endl;
+    std::cout << "---" << instanceName(instance) << ": process exited with code " << status << std::endl;
     return status;
 }
