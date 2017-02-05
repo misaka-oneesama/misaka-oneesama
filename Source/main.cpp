@@ -15,10 +15,14 @@
 
 #include <Global.hpp>
 #include <Core/IpcProcess.hpp>
+#include <Core/ThreadId.hpp>
 #include <Core/DBusInterface.hpp>
 
 std::unique_ptr<QCoreApplication> a;
 InstanceType instance = ItMaster;
+
+QThread *threadMain = nullptr;
+ThreadId *threadId = new ThreadId("main");
 
 void signal_terminate(int)
 {
@@ -35,6 +39,9 @@ void terminate(quint8 exitCode)
     a.reset();
     delete configManager;
     delete debugger;
+    delete threadId;
+    threadId = nullptr;
+    threadMain->setUserData(0, nullptr);
     std::exit(exitCode);
 }
 
@@ -54,6 +61,9 @@ int main(int argc, char **argv)
     a->setApplicationVersion(QLatin1String("v0.0.2"));
     a->setOrganizationName(QString::fromUtf8("マギルゥーベルベット"));
     a->setOrganizationDomain(QLatin1String("magiruuvelvet.gdn"));
+
+    threadMain = QThread::currentThread();
+    threadMain->setUserData(0, threadId);
 
     bool silent = a->arguments().contains("--silent");
 
@@ -328,6 +338,9 @@ int main(int argc, char **argv)
 
     delete configManager;
     delete debugger;
+    delete threadId;
+    threadId = nullptr;
+    threadMain->setUserData(0, nullptr);
 
     std::cout << "---" << instanceName(instance) << ": process exited with code " << status << std::endl;
     return status;
