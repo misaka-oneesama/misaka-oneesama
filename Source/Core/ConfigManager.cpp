@@ -18,21 +18,16 @@
 #define MISAKA_DATABASE_FILENAME "/settings.sqlite"
 #endif
 
-ConfigManager::ConfigManager(bool output)
+ConfigDirectory::ConfigDirectory(bool output)
 {
-    this->m_output = output;
+    this->m_cfgPath = ConfigDirectory::configBasePath() + '/' + qApp->applicationName();
 
-    // determine config directory and filename for the database
-    const QString cfgBasePath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
-    this->m_configPath = cfgBasePath + '/' + qApp->applicationName();
-    this->m_configDatabaseFilename = this->m_configPath + MISAKA_DATABASE_FILENAME;
-
-    if (QDir(cfgBasePath).mkdir(qApp->applicationName()) ||
-        QDir(this->m_configPath).exists())
+    if (QDir(ConfigDirectory::configBasePath()).mkdir(qApp->applicationName()) ||
+        QDir(this->m_cfgPath).exists())
     {
-        if (this->m_output)
+        if (output)
         {
-            std::cerr << "ConfigManager: configuration directory found" << std::endl;
+            std::cerr << "ConfigDirectory: configuration directory found" << std::endl;
         }
 
         this->m_valid = true;
@@ -40,11 +35,44 @@ ConfigManager::ConfigManager(bool output)
 
     else
     {
-        if (this->m_output)
+        if (output)
         {
-            std::cerr << "ConfigManager: unable to create or access the configuration directory" << std::endl;
+            std::cerr << "ConfigDirectory: unable to create or access the configuration directory" << std::endl;
         }
     }
+}
+
+ConfigDirectory::~ConfigDirectory()
+{
+    this->m_cfgPath.clear();
+}
+
+const QString &ConfigDirectory::configBasePath()
+{
+    static const QString m_cfgBasePath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+    return m_cfgBasePath;
+}
+
+const QString &ConfigDirectory::configPath() const
+{
+    return this->m_cfgPath;
+}
+
+bool ConfigDirectory::isValid() const
+{
+    return this->m_valid;
+}
+
+
+ConfigManager::ConfigManager(bool output)
+{
+    this->m_output = output;
+
+    // determine config directory and filename for the database
+    this->m_cfgDir.reset(new ConfigDirectory(output));
+    this->m_valid = this->m_cfgDir->isValid();
+    this->m_configPath = this->m_cfgDir->configPath();
+    this->m_configDatabaseFilename = this->m_configPath + MISAKA_DATABASE_FILENAME;
 
     // initialize default configuration
     this->resetConfigSoft();
@@ -94,6 +122,7 @@ ConfigManager::ConfigManager(bool output)
 ConfigManager::~ConfigManager()
 {
     this->m_db.close();
+    this->m_cfgDir.reset();
 }
 
 bool ConfigManager::isValid() const

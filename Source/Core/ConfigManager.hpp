@@ -10,6 +10,26 @@
 
 #include <memory>
 
+class ConfigDirectory
+{
+public:
+    ConfigDirectory(bool output = true);
+    ~ConfigDirectory();
+
+    // returns the absolute path of the operating systems users configuration directory
+    static const QString &configBasePath();
+
+    // returns the absolute path to the configuration directory
+    const QString &configPath() const;
+
+    // returns the current status of the configuration directory
+    bool isValid() const;
+
+public:
+    bool m_valid = false;
+    QString m_cfgPath;
+};
+
 #define DEFINE_SETTING(NAME_SET, NAME_GET, TYPE) \
     public: \
         void set##NAME_SET(const TYPE &value) \
@@ -79,6 +99,8 @@ private:
     void modifyOrInsertValueAt(const QString &tableName, const QString &keyName, const QVariant &value);
 
 private:
+    std::unique_ptr<ConfigDirectory> m_cfgDir;
+
     bool m_valid = false;
     bool m_validDb = false;
     bool m_output = true;

@@ -29,25 +29,12 @@ const char *Global::instanceName(const InstanceType &type)
 
 Debugger *Global::debugger = nullptr;
 ConfigManager *Global::configManager = nullptr;
+ConfigDirectory *Global::configDir = nullptr;
 
 QMap<InstanceType, IpcProcess*> ipcMap;
 
-void Global::createIpcProcess(const InstanceType &type, ConfigManager *configManager, QObject *parent)
+void Global::createIpcProcess(const InstanceType &type, ConfigManager *cfg, QObject *parent)
 {
-//    switch (type)
-//    {
-//        case InstanceType::Server:
-//            ipcServer = new IpcProcess(parent);
-//            break;
-
-//        case InstanceType::Bot:
-//            ipcBot    = new IpcProcess(parent);
-//            break;
-
-//        default:
-//            break;
-//    }
-
     // create new process instance
     if (!ipcMap.contains(type))
     {
@@ -56,7 +43,7 @@ void Global::createIpcProcess(const InstanceType &type, ConfigManager *configMan
         // configure
         ipcMap.value(type)->setProgram(qApp->arguments().at(0));
         ipcMap.value(type)->setIdentifier(type);
-        ipcMap.value(type)->redirectOutput(configManager->debuggerPrintToTerminal());
+        ipcMap.value(type)->redirectOutput(cfg->debuggerPrintToTerminal());
 
         // signal connections
         QObject::connect(static_cast<QCoreApplication*>(parent), &QCoreApplication::aboutToQuit, ipcMap.value(type), &IpcProcess::terminate);

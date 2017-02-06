@@ -95,10 +95,10 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
 
  - [ ] Refactoring and general improvements, fix lazy spaghetti code from early development!!
    - [x] Refactor `ConfigManager` to use SQLite3 instead of raw binary serialization
-   - [ ] Proper and correct command line parsing. > Hardcoding argument positions -> totally not lazy code ¯\_(ツ)_/¯
+   - [x] Proper and correct command line parsing. > Hardcoding argument positions -> totally not lazy code ¯\\_(ツ)_/¯
      - [x] Master instance
-     - [ ] Child instances
-   - [ ] Refactor `main.cpp`. Toooooo much code redundancy, inefficient and unreadable.
+     - [x] Child instances
+   - [x] Refactor `main.cpp`. Toooooo much code redundancy, inefficient and unreadable.
    - [ ] Refactor and improve `Server` and `BotManager` signals and slots and overall structure.
  - [ ] Implement Bot Core
    - [x] Discord login and WebSocket communication

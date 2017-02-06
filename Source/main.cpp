@@ -39,6 +39,7 @@ Q_NORETURN void terminate(quint8 exitCode)
 {
     a.reset();
     delete configManager;
+    delete configDir;
     delete debugger;
     delete threadId;
     threadId = nullptr;
@@ -82,7 +83,6 @@ int main(int argc, char **argv)
         {"skip-bot",                "[m] Don't start the bot process during startup."},
         {{"n", "no-init-messages"}, "[a] Hides all unimportant startup messages."},
         {"terminal-logging",        "[i] Prints all messages to the terminal. Warning! Degrades performance! [Synced and Blocking]"},
-        {"no-terminal-logging",     "[i] Disables terminal logging. Recommended in production."},
         {"listen",                  "[s] Server listening address.", "address"},
         {"port",                    "[s] Server listening port.", "port"},
         {"token",                   "[b] Discord OAuth token. Must be a Bot token!", "token"},
@@ -133,11 +133,13 @@ int main(int argc, char **argv)
         else if (QString::compare(inst, "server", Qt::CaseInsensitive) == 0)
         {
             instance = ItServer;
+            configDir = new ConfigDirectory(false);
         }
 
         else if (QString::compare(inst, "bot", Qt::CaseInsensitive) == 0)
         {
             instance = ItBot;
+            configDir = new ConfigDirectory(false);
         }
 
         else
@@ -227,9 +229,8 @@ int main(int argc, char **argv)
         // Shared command line arguments across all instances
         const QStringList sharedArgs({
             "--no-init-messages",
-            configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "--no-terminal-logging",
-            "--log-max=" + QString::number(configManager->maxLogFilesToKeep()),
-            "--log-dir=" + debugger->logDir()
+            configManager->debuggerPrintToTerminal() ? "--terminal-logging" : "",
+            "--log-max=" + QString::number(configManager->maxLogFilesToKeep())
         });
 
         ///
@@ -263,7 +264,7 @@ int main(int argc, char **argv)
         createIpcProcess(ItBot, configManager, a.get());
 
         ipc(ItBot)->setArguments(QStringList({"--instance=bot",
-            "--token=" + configManager->token(),
+            "--token=" + configManager->token()
         }) << sharedArgs);
 
         if (!parser.isSet("skip-bot"))
@@ -297,17 +298,101 @@ int main(int argc, char **argv)
 
     else if (instance == ItServer)
     {
-        std::cout << "---App: starting server process..." << std::endl;
+        std::cout << "---App: starting master process..." << std::endl;
 
-        if (argc < 3) // FIXME!!
+        // Validate command line arguments
+        std::cout << "---" << instanceName(instance) << ": validating command line arguments..." << std::endl;
+
+        if (argc < 4)
         {
-            std::cerr << instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
-            terminate(TerminateReason::CommandLineParsingError);
+            std::cerr << instanceName(instance) << ": Too few command line arguments!" << std::endl;
+            std::cerr << instanceName(instance) << ": Please don't run the instance directly. Use D-Bus instead." << std::endl;
+            terminate(TerminateReason::UncategorizedError);
         }
 
-        debugger->setMaxLogFilesToKeep(a->arguments().at(6).mid(10).toUShort());
-        debugger->setLogDir(a->arguments().at(7).mid(10));
-        debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
+        if (!parser.isSet("listen"))
+        {
+            std::cerr << instanceName(instance) << ": Listening address missing." << std::endl;
+            terminate(TerminateReason::UncategorizedError);
+        }
+
+        if (!parser.isSet("port"))
+        {
+            std::cerr << instanceName(instance) << ": Listening port missing." << std::endl;
+            terminate(TerminateReason::UncategorizedError);
+        }
+
+        debugger->setMaxLogFilesToKeep(parser.isSet("log-max") ? parser.value("log-max").toUShort() : 5);
+        debugger->setLogDir(parser.isSet("log-dir") ? parser.value("log-dir") : configDir->configPath() + "/logs");
+        debugger->printToTerminal(parser.isSet("terminal-logging"));
+        debugger->setEnabled(true);
+
+        // Check if the master process is running and connected to D-Bus
+        std::cout << "---" << instanceName(instance) << ": validating D-Bus connection..." << std::endl;
+        QDBusInterface iface(DBusServiceName(ItMaster), "/", "", QDBusConnection::sessionBus());
+        if (!iface.isValid())
+        {
+            debugger->error("D-Bus: the master process interface couldn't be found!");
+            debugger->error("D-Bus: refusing to start!");
+            debugger->error("D-Bus: " + QDBusConnection::sessionBus().lastError().message());
+            terminate(TerminateReason::DBusServiceConnectionError);
+        }
+
+        std::cout << "---" << instanceName(instance) << ": Initializing server..." << std::endl;
+        server = new Server();
+        ServerDBusAdapter *server_dbus = new ServerDBusAdapter(server);
+        server->setListeningAddress(parser.value("listen"));
+        server->setListeningPort(parser.value("port").toUShort());
+        QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
+        QObject::connect(server, &Server::stopped, a.get(), &QCoreApplication::quit);
+
+        std::cout << "---" << instanceName(instance) << ": Registering D-Bus service..." << std::endl;
+        if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItServer)))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+            a.reset();
+            delete server_dbus;
+            delete server;
+            terminate(TerminateReason::DBusServiceRegistrationFailed);
+        }
+
+        std::cout << "---" << instanceName(instance) << ": Registering D-Bus interface..." << std::endl;
+        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItServer), server_dbus, DBusFlags))
+        {
+            debugger->error(QDBusConnection::sessionBus().lastError().message());
+            a.reset();
+            delete server_dbus;
+            delete server;
+            terminate(TerminateReason::DBusObjectRegistrationFailed);
+        }
+
+        std::cout << "---" << instanceName(instance) << ": Starting server..." << std::endl;
+        QTimer::singleShot(0, server, &Server::start);
+    }
+
+    else if (instance == ItBot)
+    {
+        std::cout << "---App: starting bot process..." << std::endl;
+
+        // Validate command line arguments
+        std::cout << "---" << instanceName(instance) << ": validating command line arguments..." << std::endl;
+
+        if (argc < 2)
+        {
+            std::cerr << instanceName(instance) << ": Too few command line arguments!" << std::endl;
+            std::cerr << instanceName(instance) << ": Please don't run the instance directly. Use D-Bus instead." << std::endl;
+            terminate(TerminateReason::UncategorizedError);
+        }
+
+        if (!parser.isSet("token"))
+        {
+            std::cerr << instanceName(instance) << ": OAuth token is missing." << std::endl;
+            terminate(TerminateReason::UncategorizedError);
+        }
+
+        debugger->setMaxLogFilesToKeep(parser.isSet("log-max") ? parser.value("log-max").toUShort() : 5);
+        debugger->setLogDir(parser.isSet("log-dir") ? parser.value("log-dir") : configDir->configPath() + "/logs");
+        debugger->printToTerminal(parser.isSet("terminal-logging"));
         debugger->setEnabled(true);
 
         // Check if the master process is running and connected to D-Bus
@@ -320,58 +405,7 @@ int main(int argc, char **argv)
             terminate(TerminateReason::DBusServiceConnectionError);
         }
 
-        server = new Server();
-        ServerDBusAdapter *server_dbus = new ServerDBusAdapter(server);
-        server->setListeningAddress(a->arguments().at(2).mid(9));
-        server->setListeningPort(a->arguments().at(3).mid(7).toUShort());
-        QObject::connect(server, &Server::stopped, server, &Server::deleteLater);
-        QObject::connect(server, &Server::stopped, a.get(), &QCoreApplication::quit);
-
-        if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItServer)))
-        {
-            debugger->error(QDBusConnection::sessionBus().lastError().message());
-            a.reset();
-            delete server_dbus;
-            delete server;
-            terminate(TerminateReason::DBusServiceRegistrationFailed);
-        }
-
-        if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItServer), server_dbus, DBusFlags))
-        {
-            debugger->error(QDBusConnection::sessionBus().lastError().message());
-            a.reset();
-            delete server_dbus;
-            delete server;
-            terminate(TerminateReason::DBusObjectRegistrationFailed);
-        }
-
-        QTimer::singleShot(0, server, &Server::start);
-    }
-
-    else if (instance == ItBot)
-    {
-        std::cout << "---App: starting bot process..." << std::endl;
-
-        if (argc < 3) // FIXME!
-        {
-            std::cerr << instanceName(instance) << ": Too few command line arguments! Please don't run the instance directly." << std::endl;
-            terminate(TerminateReason::CommandLineParsingError);
-        }
-
-        debugger->setMaxLogFilesToKeep(a->arguments().at(5).mid(10).toUShort());
-        debugger->setLogDir(a->arguments().at(6).mid(10));
-        debugger->printToTerminal(a->arguments().contains("--terminal-logging"));
-        debugger->setEnabled(true);
-
-        QDBusInterface iface(DBusServiceName(ItMaster), "/", "", QDBusConnection::sessionBus());
-        if (!iface.isValid())
-        {
-            debugger->error("D-Bus: the master process interface couldn't be found!");
-            debugger->error("D-Bus: refusing to start!");
-            debugger->error("D-Bus: " + QDBusConnection::sessionBus().lastError().message());
-            terminate(TerminateReason::DBusServiceConnectionError);
-        }
-
+        std::cout << "---" << instanceName(instance) << ": Initializing bot..." << std::endl;
         botManager = new BotManager();
         BotManagerDBusAdapter *botManager_dbus = new BotManagerDBusAdapter(botManager);
         botManager->setOAuthToken(a->arguments().at(2).mid(8));
@@ -387,6 +421,7 @@ int main(int argc, char **argv)
         QObject::connect(botManager, &BotManager::stopped, botManager, &BotManager::deleteLater);
         QObject::connect(botManager, &BotManager::stopped, a.get(), &QCoreApplication::quit);
 
+        std::cout << "---" << instanceName(instance) << ": Registering D-Bus service..." << std::endl;
         if (!QDBusConnection::sessionBus().registerService(DBusServiceName(ItBot)))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
@@ -396,6 +431,7 @@ int main(int argc, char **argv)
             terminate(TerminateReason::DBusServiceRegistrationFailed);
         }
 
+        std::cout << "---" << instanceName(instance) << ": Registering D-Bus interface..." << std::endl;
         if (!QDBusConnection::sessionBus().registerObject("/", DBusServiceName(ItBot), botManager_dbus, DBusFlags))
         {
             debugger->error(QDBusConnection::sessionBus().lastError().message());
@@ -405,6 +441,7 @@ int main(int argc, char **argv)
             terminate(TerminateReason::DBusObjectRegistrationFailed);
         }
 
+        std::cout << "---" << instanceName(instance) << ": Starting bot..." << std::endl;
         QTimer::singleShot(0, botManager, static_cast<void(BotManager::*)()>(&BotManager::login));
     }
 
@@ -412,6 +449,7 @@ int main(int argc, char **argv)
     a.reset();
 
     delete configManager;
+    delete configDir;
     delete debugger;
     delete threadId;
     threadId = nullptr;

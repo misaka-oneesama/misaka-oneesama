@@ -62,8 +62,11 @@ namespace Global
     // can ONLY be used in the [Master] instance
     extern ConfigManager *configManager;
 
+    // can ONLY be used in child processes
+    extern ConfigDirectory *configDir;
+
     // returns a pointer to the IPC process object, can ONLY be used in the [Master] instance
-    void createIpcProcess(const InstanceType &type, ConfigManager *configManager, QObject *parent = nullptr);
+    void createIpcProcess(const InstanceType &type, ConfigManager *cfg, QObject *parent = nullptr);
     IpcProcess *ipc(const InstanceType &type);
 
     // can ONLY be used in the [Server] instance
