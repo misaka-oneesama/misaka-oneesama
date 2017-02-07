@@ -71,3 +71,8 @@ Thumbs.db
 *.dll
 *.exe
 
+# Other
+# -----
+
+/update_license
+/license_header
