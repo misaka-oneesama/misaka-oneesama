@@ -39,16 +39,6 @@ public:
     BotManager(QObject *parent = nullptr);
     ~BotManager();
 
-    enum NotifyCode : quint8 {
-        LoginSuccess = 0,
-        LoggedOut,
-        Disconnected
-    };
-
-    enum ErrorCode : quint8 {
-        LoginFailed = 0
-    };
-
     void setOAuthToken(const QString &token);
     const QString &token() const;
 
@@ -57,21 +47,26 @@ public:
 public slots:
     void login();
     void login(const QString &token);
+    void login(const QString &token, const QDiscordTokenType &type);
     void logout();
 
     void stop();
+    void reload();
 
 private slots:
+    void internal_loginSuccess();
+    void internal_loginFailed();
+    void internal_loggedOut();
+    void internal_disconnected();
+
+signals:
     void loginSuccess();
     void loginFailed();
     void loggedOut();
     void disconnected();
 
-signals:
-    void notify(NotifyCode);
-    void error(ErrorCode);
-
     void stopped();
+    void reloaded();
 
 private:
     QMutex m_mutex;
@@ -80,6 +75,8 @@ private:
     std::unique_ptr<DiscordEventHandler> m_eventHandler;
 
     QString m_token;
+    bool m_isStopping = false;
+    bool m_isReloading = false;
 };
 
 class BotManagerDBusAdapter : public QObject
@@ -91,12 +88,11 @@ public:
     ~BotManagerDBusAdapter();
 
 public slots:
-    Q_NOREPLY void start();
-    Q_NOREPLY void stop();
-    Q_SCRIPTABLE bool reload();
-
-    Q_NOREPLY void login();
-    Q_NOREPLY void logout();
+    Q_NOREPLY void start();   // aka login
+    Q_NOREPLY void login();   // alias to .start
+    Q_NOREPLY void stop();    // aka stop process
+    Q_NOREPLY void logout();  // just logout keeping the process alive
+    Q_NOREPLY void reload();  // re-login
 
     Q_SCRIPTABLE bool isConnected();
 

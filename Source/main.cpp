@@ -430,6 +430,8 @@ int main(int argc, char **argv)
         botManager->setOAuthToken(a->arguments().at(2).mid(8));
 
         // FIXME! is this secure enough?
+        // BUG: argv[2] hardcoded, `--token=` could be anywhere in the array
+        //
         // remove OAuth token from argv (hides it from /proc/self/exe, ps ax, and other sources)
         std::size_t argvlen = strlen(argv[2]);
         for (std::size_t i = 8; i < argvlen; i++)

@@ -20,19 +20,16 @@
 #include "BotManager.hpp"
 #include <Global.hpp>
 
-#include <QThread>
-#include <Core/ThreadId.hpp>
-
 BotManager::BotManager(QObject *parent)
     : QObject(parent)
 {
     this->m_discord.reset(new QDiscord());
     this->m_eventHandler.reset(new DiscordEventHandler(this->m_discord.get()));
 
-    QObject::connect(this->m_discord.get(), &QDiscord::loginSuccess, this, &BotManager::loginSuccess);
-    QObject::connect(this->m_discord.get(), &QDiscord::loginFailed, this, &BotManager::loginFailed);
-    QObject::connect(this->m_discord.get(), &QDiscord::loggedOut, this, &BotManager::loggedOut);
-    QObject::connect(this->m_discord.get(), &QDiscord::disconnected, this, &BotManager::disconnected);
+    QObject::connect(this->m_discord.get(), &QDiscord::loginSuccess, this, &BotManager::internal_loginSuccess);
+    QObject::connect(this->m_discord.get(), &QDiscord::loginFailed, this, &BotManager::internal_loginFailed);
+    QObject::connect(this->m_discord.get(), &QDiscord::loggedOut, this, &BotManager::internal_loggedOut);
+    QObject::connect(this->m_discord.get(), &QDiscord::disconnected, this, &BotManager::internal_disconnected);
 }
 
 BotManager::~BotManager()
@@ -67,6 +64,11 @@ void BotManager::login(const QString &token)
     this->m_discord->login(token, QDiscordTokenType::Bot);
 }
 
+void BotManager::login(const QString &token, const QDiscordTokenType &type)
+{
+    this->m_discord->login(token, type);
+}
+
 void BotManager::logout()
 {
     this->m_discord->logout();
@@ -74,40 +76,69 @@ void BotManager::logout()
 
 void BotManager::stop()
 {
+    this->m_mutex.lock();
+    this->m_isStopping = true;
+    this->m_mutex.unlock();
     this->logout();
-    emit stopped();
 }
 
-void BotManager::loginSuccess()
+void BotManager::reload()
 {
-    debugger->notice("BotManager: logged in");
-    emit notify(LoginSuccess);
+    this->m_mutex.lock();
+    this->m_isReloading = true;
+    this->m_mutex.unlock();
+    this->logout();
 }
 
-void BotManager::loginFailed()
+void BotManager::internal_loginSuccess()
 {
-    debugger->error("BotManager: failed to login");
-    emit error(LoginFailed);
+    debugger->notice("BotManager: logged in.");
+    emit loginSuccess();
 }
 
-void BotManager::loggedOut()
+void BotManager::internal_loginFailed()
 {
-    debugger->notice("BotManager: logged out");
-    emit notify(LoggedOut);
+    debugger->error("BotManager: failed to login.");
+    emit loginFailed();
 }
 
-void BotManager::disconnected()
+void BotManager::internal_loggedOut()
 {
-    debugger->notice("BotManager: WebSocket closed by host. Session no longer valid or other network error.");
-    debugger->notice("BotManager: Reconnecting...");
-    emit notify(Disconnected);
+    debugger->notice("BotManager: logged out.");
+
+    if (this->m_isStopping)
+    {
+        this->m_mutex.lock();
+        this->m_isStopping = false;
+        this->m_mutex.unlock();
+        emit stopped();
+    }
+
+    else if (this->m_isReloading)
+    {
+        this->m_mutex.lock();
+        this->m_isReloading = false;
+        this->m_mutex.unlock();
+        this->login();
+        emit reloaded();
+    }
+
+    else
+    {
+        emit loggedOut();
+    }
 }
 
+void BotManager::internal_disconnected()
+{
+    debugger->notice("BotManager: disconnected.");
+    emit disconnected();
+}
 
-BotManagerDBusAdapter::BotManagerDBusAdapter(BotManager *botManager, QObject *parent)
+BotManagerDBusAdapter::BotManagerDBusAdapter(BotManager *bm, QObject *parent)
     : QObject(parent)
 {
-    this->d = botManager;
+    this->d = bm;
 }
 
 BotManagerDBusAdapter::~BotManagerDBusAdapter()
@@ -120,30 +151,24 @@ void BotManagerDBusAdapter::start()
     this->d->login();
 }
 
-void BotManagerDBusAdapter::stop()
-{
-    this->d->stop();
-}
-
-// FIXME: doesn't work, delay/sleep doesn't fixes the problem
-bool BotManagerDBusAdapter::reload()
-{
-//    QMutexLocker(&this->m_mutex);
-//    this->d->logout();
-//    this->d->login();
-//    return this->d->isConnected();
-    debugger->warning("D-Bus: Bot: method '.reload' is unimplemented. Use '.logout' + '.login' instead.");
-    return false;
-}
-
 void BotManagerDBusAdapter::login()
 {
     this->d->login();
 }
 
+void BotManagerDBusAdapter::stop()
+{
+    this->d->stop();
+}
+
 void BotManagerDBusAdapter::logout()
 {
     this->d->logout();
+}
+
+void BotManagerDBusAdapter::reload()
+{
+    this->d->reload();
 }
 
 bool BotManagerDBusAdapter::isConnected()
