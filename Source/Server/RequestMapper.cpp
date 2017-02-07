@@ -33,6 +33,8 @@ void RequestMapper::service(HttpRequest &request, HttpResponse &response)
     debugger->notice(QString("[HTTP %1] RequestMapper: (path=%2)").arg(request.getMethod().constData(), path.constData()));
 
     // todo: change to html when we got basic functionality working
+    // API responses should be always plain though
+    // todo(api): implement json responses??
     response.setHeader("Content-Type", "text/plain; charset=UTF-8");
 
     if (path == "/")
@@ -60,51 +62,9 @@ void RequestMapper::service(HttpRequest &request, HttpResponse &response)
     debugger->notice(QString("[HTTP %1] RequestMapper: finished request for (path=%2)").arg(request.getMethod().constData(), path.constData()));
 }
 
-void RequestMapper::api(HttpRequest &request, HttpResponse &response, const QString &endpoint)
+void RequestMapper::dbusError(HttpResponse &response)
 {
-    if (endpoint == "/shutdown")
-    {
-        response.setStatus(200);
-        response.write(QByteArray("Shutting down..."), true);
-
-        emit shutdown();
-    }
-
-    else if (endpoint == "/bot/start")
-    {
-        if (this->m_ifaceMaster->isValid())
-        {
-            this->m_ifaceMaster->call("startBot");
-            response.setStatus(200);
-            response.write(QByteArray("Call to 'startBot' was successful."), true);
-        }
-
-        else
-        {
-            response.setStatus(503);
-            response.write(QByteArray("Can't connect to the D-Bus Interface."), true);
-        }
-    }
-
-    else if (endpoint == "/bot/stop")
-    {
-        if (this->m_ifaceMaster->isValid())
-        {
-            this->m_ifaceMaster->call("stopBot");
-            response.setStatus(200);
-            response.write(QByteArray("Call to 'stopBot' was successful."), true);
-        }
-
-        else
-        {
-            response.setStatus(503);
-            response.write(QByteArray("Can't connect to the D-Bus Interface."), true);
-        }
-    }
-
-    else
-    {
-        response.setStatus(400);
-        response.write(QString("No such endpoint: %1").arg(request.getPath().constData()).toUtf8(), true);
-    }
+    debugger->warning("RequestMapper: Can't connect to the D-Bus Interface.");
+    response.setStatus(503);
+    response.write(QByteArray("Can't connect to the D-Bus Interface."), true);
 }

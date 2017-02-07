@@ -21,15 +21,15 @@ class Server : public QObject
 
 public:
     Server(QObject *parent = nullptr);
-    Server(const QString &listeningAddress, quint16 listeningPort, QObject *parent = nullptr);
+    Server(const QString &listeningAddress, const quint16 &listeningPort, QObject *parent = nullptr);
     ~Server();
 
     enum ErrorCode : quint8 {
-        ServerNotConfigured = 0
+        InvalidAddressOrPort
     };
 
     static bool isPortAvailable(const quint16 &port);
-    bool isRunning() const;
+    const bool &isRunning() const;
 
     const QString &listeningAddress() const;
     const quint16 &listeningPort() const;
@@ -41,30 +41,35 @@ public slots:
 
     void start();
     void stop();
-    void restart(); // wrapper around `stop` and `start`
+    void halt();
+    void restart(); // wrapper around `stop` and `start` with its own signal
 
 signals:
     void listeningAddressChanged();
     void listeningPortChanged();
+
     void started();
     void stopped();
+    void halted();
     void restarted();
+
     void error(ErrorCode);
 
 private:
     QMutex m_mutex;
-    bool m_configured = false;
+
     bool m_isRunning = false;
 
     std::unique_ptr<QtWebApp::HttpServerSettings> m_httpServerSettings;
     std::unique_ptr<HttpListener> m_httpListener;
     std::unique_ptr<RequestMapper> m_requestMapper;
 
-    QString m_listeningAddress = QLatin1String("127.0.0.1");
-    quint16 m_listeningPort = 4555; // default server port
+    QString m_listeningAddress = "127.0.0.1";
+    quint16 m_listeningPort = 4555;
 
-    void p_startPrivate();
-    void p_stopPrivate();
+    void setPortInternal(const quint16 &port);
+    void startInternal();
+    void stopInternal();
 };
 
 class ServerDBusAdapter : public QObject
@@ -78,6 +83,7 @@ public:
 public slots:
     Q_NOREPLY void start();
     Q_NOREPLY void stop();
+    Q_NOREPLY void halt(); // stop Server without terminating process
     Q_SCRIPTABLE bool reload();
 
     Q_SCRIPTABLE bool isPortAvailable(const quint16 &port);

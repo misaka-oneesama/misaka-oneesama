@@ -4,15 +4,16 @@
 #include <QThread>
 #include <QTcpSocket>
 
+#include <chrono>
+#include <random>
+
 Server::Server(QObject *parent)
     : QObject(parent)
 {
     this->m_httpServerSettings.reset(new QtWebApp::HttpServerSettings);
-
-    this->m_configured = true;
 }
 
-Server::Server(const QString &listeningAddress, quint16 listeningPort, QObject *parent)
+Server::Server(const QString &listeningAddress, const quint16 &listeningPort, QObject *parent)
     : Server(parent)
 {
     this->m_listeningAddress = listeningAddress;
@@ -47,7 +48,7 @@ bool Server::isPortAvailable(const quint16 &port)
     return false;
 }
 
-bool Server::isRunning() const
+const bool &Server::isRunning() const
 {
     return this->m_isRunning;
 }
@@ -70,14 +71,14 @@ void Server::setListeningAddress(const QString &address)
         this->m_listeningAddress = address;
         this->m_httpServerSettings->host = address;
         this->m_mutex.unlock();
-        debugger->notice("Server: set listening address to " + address);
+        debugger->notice(QString("Server: set listening address to '%1'").arg(address));
         emit listeningAddressChanged();
     }
 
     else
     {
-        debugger->error("Server: not a valid listening address");
-        debugger->notice("Server: listening address unchanged");
+        debugger->error(QString("Server: '%1' is not a valid listening address.").arg(address));
+        debugger->notice("Server: listening address unchanged.");
     }
 }
 
@@ -86,24 +87,39 @@ void Server::setListeningPort(const quint16 &port)
     // do nothing if port is unchanged
     if (port == this->m_listeningPort && port == this->m_httpServerSettings->port)
     {
+        debugger->notice(QString("Server: listening port is already %1").arg(QString::number(port)));
         return;
     }
 
-    // lets trust the magic of `uint16` here ;)
-    if (port != 0 && this->isPortAvailable(port))
+    if (/*port > 0 && port <= 65535 && */this->isPortAvailable(port))
     {
         this->m_mutex.lock();
-        this->m_listeningPort = port;
-        this->m_httpServerSettings->port = port;
+        this->setPortInternal(port);
         this->m_mutex.unlock();
-        debugger->notice("Server: set listening port to " + QString::number(port));
         emit listeningPortChanged();
+    }
+
+    else if (port == 0)
+    {
+        static std::random_device rd;
+        static std::mt19937 mt(rd());
+        static std::uniform_int_distribution<quint16> dist(1, 65535);
+
+        this->m_mutex.lock();
+        quint16 random_port = dist(mt);
+
+        if (this->isPortAvailable(random_port))
+        {
+            this->setPortInternal(random_port);
+            this->m_mutex.unlock();
+            emit listeningPortChanged();
+        }
     }
 
     else
     {
         debugger->error(QString("Server: %1 = invalid listening port or port is already taken").arg(QString::number(port)));
-        debugger->notice("Server: listening port unchanged");
+        debugger->notice("Server: listening port unchanged.");
     }
 }
 
@@ -118,14 +134,14 @@ void Server::start()
 {
     if (!this->m_isRunning)
     {
-        if (!this->m_configured || this->m_listeningAddress.size() == 0 || this->m_listeningPort == 0)
+        if (this->m_listeningAddress.size() == 0 || this->m_listeningPort == 0)
         {
-            debugger->error("Server: can not start a unconfigured server, please specify a valid address and port number");
-            emit error(ServerNotConfigured);
+            debugger->error("Server: can not start server, please specify a valid address and port number");
+            emit error(InvalidAddressOrPort);
             return;
         }
 
-        this->p_startPrivate();
+        this->startInternal();
         emit started();
     }
 
@@ -135,7 +151,14 @@ void Server::start()
     }
 }
 
-void Server::p_startPrivate()
+void Server::setPortInternal(const quint16 &port)
+{
+    this->m_listeningPort = port;
+    this->m_httpServerSettings->port = port;
+    debugger->notice(QString("Server: listening port changed to %1").arg(QString::number(port)));
+}
+
+void Server::startInternal()
 {
     debugger->notice("Server: starting up...");
 
@@ -144,8 +167,9 @@ void Server::p_startPrivate()
         this->m_requestMapper.reset(new RequestMapper(this));
         this->m_httpListener.reset(new HttpListener(this->m_httpServerSettings.get(), this->m_requestMapper.get(), this));
         QObject::connect(this->m_requestMapper.get(), &RequestMapper::shutdown, this, &Server::stop);
+        QObject::connect(this->m_requestMapper.get(), &RequestMapper::reload, this, &Server::restart);
         this->m_isRunning = true;
-        debugger->notice("Server: started");
+        debugger->notice("Server: started.");
     }
 }
 
@@ -153,45 +177,61 @@ void Server::stop()
 {
     if (this->m_isRunning)
     {
-        this->p_stopPrivate();
+        this->stopInternal();
         emit stopped();
     }
 
     else
     {
-        debugger->warning("Server: server already stopped");
+        debugger->warning("Server: server already stopped.");
     }
 }
 
-void Server::p_stopPrivate()
+void Server::stopInternal()
 {
     debugger->notice("Server: shutting down...");
 
     if (this->m_httpListener && this->m_requestMapper)
     {
         QObject::disconnect(this->m_requestMapper.get(), &RequestMapper::shutdown, this, &Server::stop);
+        QObject::disconnect(this->m_requestMapper.get(), &RequestMapper::reload, this, &Server::restart);
         this->m_requestMapper.reset();
 
         this->m_httpListener->close();
         this->m_httpListener.reset();
 
         this->m_isRunning = false;
-        debugger->notice("Server: stopped");
+        debugger->notice("Server: stopped.");
+    }
+}
+
+void Server::halt()
+{
+    if (this->m_isRunning)
+    {
+        this->stopInternal();
+        debugger->notice("Server: server halted.");
+        emit halted();
+    }
+
+    else
+    {
+        debugger->warning("Server: server not running.");
     }
 }
 
 void Server::restart()
 {
-    this->p_stopPrivate();
-    this->p_startPrivate();
+    this->stopInternal();
+    this->startInternal();
     emit restarted();
 }
 
 
-ServerDBusAdapter::ServerDBusAdapter(Server *server, QObject *parent)
+ServerDBusAdapter::ServerDBusAdapter(Server *s, QObject *parent)
     : QObject(parent)
 {
-    this->d = server;
+    this->d = s;
 }
 
 ServerDBusAdapter::~ServerDBusAdapter()
@@ -201,12 +241,20 @@ ServerDBusAdapter::~ServerDBusAdapter()
 
 void ServerDBusAdapter::start()
 {
+    QMutexLocker(&this->m_mutex);
     this->d->start();
 }
 
 void ServerDBusAdapter::stop()
 {
+    QMutexLocker(&this->m_mutex);
     this->d->stop();
+}
+
+void ServerDBusAdapter::halt()
+{
+    QMutexLocker(&this->m_mutex);
+    this->d->halt();
 }
 
 bool ServerDBusAdapter::reload()
@@ -235,7 +283,7 @@ bool ServerDBusAdapter::setAddress(const QString &address)
 
     else
     {
-        debugger->notice("D-Bus: Server: address may not be empty!");
+        debugger->notice("D-Bus: Server address may not be empty!");
     }
 
     return false;
@@ -253,16 +301,34 @@ bool ServerDBusAdapter::setPort(const quint16 &port)
         return true;
     }
 
-    if (Server::isPortAvailable(port))
+    quint16 random_port = 0;
+    if (port == 0)
     {
-        this->d->setListeningPortUnsafe(port);
-        debugger->notice("D-Bus: Server port changed. Please reload the server for the changes to take effect.");
+        static std::random_device rd;
+        static std::mt19937 mt(rd());
+        static std::uniform_int_distribution<quint16> dist(1, 65535);
+
+        debugger->notice("D-Bus: A port of 0 is not possible. Generating a random 16-bit uint now...");
+
+        random_port = dist(mt);
+    }
+
+    else
+    {
+        random_port = port;
+    }
+
+    if (Server::isPortAvailable(random_port))
+    {
+        this->d->setListeningPortUnsafe(random_port);
+        debugger->notice(QString("D-Bus: Server port changed to %1. Please reload the server for the changes to take effect.")
+                         .arg(QString::number(random_port)));
         return true;
     }
 
     else
     {
-        debugger->warning(QString("D-Bus: Server: port %1 is taken or bind error occurred. Try another port.").arg(QString::number(port)));
+        debugger->warning(QString("D-Bus: Server: port %1 is already taken or bind error occurred. Try another port.").arg(QString::number(port)));
     }
 
     return false;

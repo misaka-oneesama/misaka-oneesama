@@ -18,10 +18,16 @@ public:
     ~RequestMapper();
 
     void service(HttpRequest &request, HttpResponse &response);
+
+private:
     void api(HttpRequest &request, HttpResponse &response, const QString &endpoint);
+    void apiBot(HttpRequest &request, HttpResponse &response, const QString &endpoint);
+
+    void dbusError(HttpResponse &response);
 
 signals:
     void shutdown();
+    void reload();
 
 private:
     std::unique_ptr<QDBusInterface> m_ifaceMaster;

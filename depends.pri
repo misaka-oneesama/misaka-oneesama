@@ -12,6 +12,8 @@ SOURCES += \
     \
     $$PWD/Source/Server/Server.cpp \
     $$PWD/Source/Server/RequestMapper.cpp \
+    $$PWD/Source/Server/API/Base.cpp \
+    $$PWD/Source/Server/API/BotController.cpp \
     \
     $$PWD/Source/Bot/BotManager.cpp \
     $$PWD/Source/Bot/DiscordEventHandler.cpp
