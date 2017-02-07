@@ -56,26 +56,29 @@ bool BotManager::isConnected() const
 
 void BotManager::login()
 {
-    this->m_discord->login(this->m_token, QDiscordTokenType::Bot);
+    this->login(this->m_token, QDiscordTokenType::Bot);
 }
 
 void BotManager::login(const QString &token)
 {
-    this->m_discord->login(token, QDiscordTokenType::Bot);
+    this->login(token, QDiscordTokenType::Bot);
 }
 
 void BotManager::login(const QString &token, const QDiscordTokenType &type)
 {
+    debugger->notice("BotManager: logging in...");
     this->m_discord->login(token, type);
 }
 
 void BotManager::logout()
 {
+    debugger->notice("BotManager: logging out...");
     this->m_discord->logout();
 }
 
 void BotManager::stop()
 {
+    debugger->notice("BotManager: preparing to stop...");
     this->m_mutex.lock();
     this->m_isStopping = true;
     this->m_mutex.unlock();
@@ -84,6 +87,7 @@ void BotManager::stop()
 
 void BotManager::reload()
 {
+    debugger->notice("BotManager: preparing to reload...");
     this->m_mutex.lock();
     this->m_isReloading = true;
     this->m_mutex.unlock();
