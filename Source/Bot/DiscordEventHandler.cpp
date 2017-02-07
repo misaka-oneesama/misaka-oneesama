@@ -26,8 +26,10 @@ DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QObject *parent)
 {
     this->m_discord = discord;
 
-    //qRegisterMetaType<QDiscordMessage>("QDiscordMessage");
+    QObject::connect(this->m_discord->state(), &QDiscordStateComponent::selfCreated,
+                     this, &DiscordEventHandler::selfCreated);
 
+    // Register Message Signals
     QObject::connect(this->m_discord->state(), &QDiscordStateComponent::messageCreated,
                      this, &DiscordEventHandler::messageReceived);
     QObject::connect(this->m_discord->state(), &QDiscordStateComponent::messageUpdated,
@@ -38,6 +40,15 @@ DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QObject *parent)
 
 DiscordEventHandler::~DiscordEventHandler()
 {
+    this->m_discord = nullptr;
+}
+
+void DiscordEventHandler::selfCreated(QSharedPointer<QDiscordUser> user)
+{
+    debugger->notice(QString("Bot Account Details: [Username: %1#%2, ID: %3]").arg(
+                             user->username(),
+                             user->discriminator(),
+                             user->id()));
 }
 
 void DiscordEventHandler::messageReceived(const QDiscordMessage &message)
@@ -52,5 +63,5 @@ void DiscordEventHandler::messageUpdated(const QDiscordMessage &message, const Q
 
 void DiscordEventHandler::messageDeleted(const QDiscordMessage &message)
 {
-    debugger->notice("DiscordEventHandler: message deleted -> " + message.content());
+    debugger->notice("DiscordEventHandler: message deleted -> " + message.id());
 }

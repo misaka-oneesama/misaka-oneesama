@@ -32,6 +32,8 @@ public:
     ~DiscordEventHandler();
 
 private slots:
+    void selfCreated(QSharedPointer<QDiscordUser> user);
+
     void messageReceived(const QDiscordMessage &message);
     void messageUpdated(const QDiscordMessage &message, const QDateTime &timestamp);
     void messageDeleted(const QDiscordMessage &message);
