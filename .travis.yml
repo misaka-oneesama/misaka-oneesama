@@ -11,10 +11,6 @@ os:
 compiler:
   - gcc
 
-# workaround 'pacaur' installation issue (:: editor variable unset)
-env:
-  - EDITOR="echo"
-
 arch:
   packages:
     - qt5-base
