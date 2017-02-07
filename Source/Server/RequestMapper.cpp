@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-#include "StaticFileController.hpp"
+#include <QtWebApp/HttpServer/StaticFileController>
 
 RequestMapper::RequestMapper(QObject *parent)
     : HttpRequestHandler(parent)

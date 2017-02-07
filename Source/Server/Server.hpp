@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "HttpListener.hpp"
+#include <QtWebApp/HttpServer/HttpListener>
 #include <Server/RequestMapper.hpp>
 
 using namespace QtWebApp::HttpServer;

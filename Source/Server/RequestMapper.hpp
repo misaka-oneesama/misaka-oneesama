@@ -4,7 +4,7 @@
 #include <QDBusInterface>
 #include <memory>
 
-#include "HttpRequestHandler.hpp"
+#include <QtWebApp/HttpServer/HttpRequestHandler>
 
 using namespace QtWebApp::HttpServer;
 
