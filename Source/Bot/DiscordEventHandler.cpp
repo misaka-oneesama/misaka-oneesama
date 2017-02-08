@@ -47,8 +47,8 @@ void DiscordEventHandler::selfCreated(QSharedPointer<QDiscordUser> user)
 {
     debugger->notice(QString("Bot Account Details: [Username: %1#%2, ID: %3]").arg(
                              user->username(),
-                             user->discriminator(),
-                             user->id()));
+                             QString::number(user->discriminator()),
+                             QString::number(user->id())));
 }
 
 void DiscordEventHandler::messageReceived(const QDiscordMessage &message)
@@ -63,5 +63,5 @@ void DiscordEventHandler::messageUpdated(const QDiscordMessage &message, const Q
 
 void DiscordEventHandler::messageDeleted(const QDiscordMessage &message)
 {
-    debugger->notice("DiscordEventHandler: message deleted -> " + message.id());
+    debugger->notice("DiscordEventHandler: message deleted -> " + QString::number(message.id()));
 }
