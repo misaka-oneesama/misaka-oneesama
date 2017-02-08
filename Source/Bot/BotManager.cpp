@@ -51,7 +51,8 @@ const QString &BotManager::token() const
 
 bool BotManager::isConnected() const
 {
-    return this->m_discord->isConnected();
+    return this->m_discord->isConnected() ||
+           this->m_discord->isConnecting();
 }
 
 QDiscord *BotManager::discord()
