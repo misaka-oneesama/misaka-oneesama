@@ -54,6 +54,11 @@ bool BotManager::isConnected() const
     return this->m_discord->isConnected();
 }
 
+QDiscord *BotManager::discord()
+{
+    return this->m_discord.get();
+}
+
 void BotManager::login()
 {
     this->login(this->m_token, QDiscordTokenType::Bot);
@@ -183,4 +188,19 @@ bool BotManagerDBusAdapter::isConnected()
 void BotManagerDBusAdapter::setOAuthToken(const QString &token)
 {
     this->d->setOAuthToken(token);
+}
+
+void BotManagerDBusAdapter::sendMessage(const quint64 &channel, const QString &message)
+{
+    this->d->discord()->rest()->sendMessage(message, channel);
+}
+
+void BotManagerDBusAdapter::editMessage(const quint64 &channel, const quint64 &messageId, const QString &content)
+{
+    this->d->discord()->rest()->editMessage(content, channel, messageId);
+}
+
+void BotManagerDBusAdapter::deleteMessage(const quint64 &channel, const quint64 &messageId)
+{
+    this->d->discord()->rest()->deleteMessage(channel, messageId);
 }

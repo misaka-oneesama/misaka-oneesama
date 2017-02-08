@@ -43,6 +43,7 @@ public:
     const QString &token() const;
 
     bool isConnected() const;
+    QDiscord *discord();
 
 public slots:
     void login();
@@ -98,6 +99,10 @@ public slots:
 
     Q_NOREPLY void setOAuthToken(const QString &token);
     //Q_SCRIPTABLE QString OAuthToken(); <-- ATTENTION! NEVER IMPLEMENT THIS FOR SECURITY REASONS!!
+
+    Q_NOREPLY void sendMessage(const quint64 &channel, const QString &message);
+    Q_NOREPLY void editMessage(const quint64 &channel, const quint64 &messageId, const QString &content);
+    Q_NOREPLY void deleteMessage(const quint64 &channel, const quint64 &messageId);
 
 private:
     QMutex m_mutex;

@@ -82,10 +82,15 @@ All 3 instances have their own D-Bus service and methods. I recommend you fire u
 `qdbus moe.misaka_oneesama / {methodName} {args}` <br>
 `dbus-send --session --dest=moe.misaka_oneesama --type=method_call --print-reply=literal / moe.misaka_oneesama.{methodName} {args}`
 
-**Example:** Check if the bot process is running.
+**Example 1:** Check if the bot process is running.
 
 `qdbus moe.misaka_oneesama / isBotRunning` <br>
 `dbus-send --session --dest=moe.misaka_oneesama --type=method_call --print-reply=literal / moe.misaka_oneesama.isBotRunning`
+
+**Example 2:** Send a message to an channel.
+
+`qdbus moe.misaka_oneesama.Bot / sendMessage {channel-id} {message-body}` <br>
+`dbus-send --session --dest=moe.misaka_oneesama.Bot --type=method_call --print-reply=literal / moe.misaka_oneesama.sendMessage uint64:{channel-id} string:{message-body}`
 
 
 There are several methods already, including but not limited to
