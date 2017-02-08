@@ -61,18 +61,18 @@ QDiscord *BotManager::discord()
 
 void BotManager::login()
 {
-    this->login(this->m_token, QDiscordTokenType::Bot);
+    this->login(QDiscordToken(this->m_token, QDiscordToken::Type::Bot));
 }
 
-void BotManager::login(const QString &token)
+void BotManager::login(const QString &token, const QDiscordToken::Type &type)
 {
-    this->login(token, QDiscordTokenType::Bot);
+    this->login(QDiscordToken(token, type));
 }
 
-void BotManager::login(const QString &token, const QDiscordTokenType &type)
+void BotManager::login(const QDiscordToken &token)
 {
     debugger->notice("BotManager: logging in...");
-    this->m_discord->login(token, type);
+    this->m_discord->login(token);
 }
 
 void BotManager::logout()

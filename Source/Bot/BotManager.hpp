@@ -46,9 +46,9 @@ public:
     QDiscord *discord();
 
 public slots:
-    void login();
-    void login(const QString &token);
-    void login(const QString &token, const QDiscordTokenType &type);
+    void login(); // always Type::Bot
+    void login(const QString &token, const QDiscordToken::Type &type = QDiscordToken::Type::Bot);
+    void login(const QDiscordToken &token);
     void logout();
 
     void stop();
