@@ -43,6 +43,8 @@ public:
     const QString &token() const;
 
     bool isConnected() const;
+
+    // Returns a pointer to the local QDiscord object (NEVER nullptr)
     QDiscord *discord();
 
 public slots:
@@ -103,6 +105,7 @@ public slots:
     Q_NOREPLY void sendMessage(const quint64 &channel, const QString &message);
     Q_NOREPLY void editMessage(const quint64 &channel, const quint64 &messageId, const QString &content);
     Q_NOREPLY void deleteMessage(const quint64 &channel, const quint64 &messageId);
+    //Q_NOREPLY void deleteMessages(const quint64 &channel, const QList<quint64> &messageIds);
 
 private:
     QMutex m_mutex;

@@ -27,6 +27,8 @@
 
 #include <QtWebApp/HttpServer/StaticFileController>
 
+const QString RequestMapper::dbus_error_message = QString::fromUtf8("Can't connect to the D-Bus Interface.");
+
 RequestMapper::RequestMapper(QObject *parent)
     : HttpRequestHandler(parent)
 {
@@ -48,23 +50,28 @@ RequestMapper::~RequestMapper()
 
 void RequestMapper::service(HttpRequest &request, HttpResponse &response)
 {
-    QByteArray path = request.getPath();
-    debugger->notice(QString("[HTTP %1] RequestMapper: (path=%2)").arg(request.getMethod().constData(), path.constData()));
+    this->request = &request;
+    this->response = &response;
 
-    // todo: change to html when we got basic functionality working
-    // API responses should be always plain though
-    // todo(api): implement json responses??
+    this->path = this->request->getPath();
+    this->method = this->request->getMethod();
+
+    debugger->notice(QString("[HTTP %1] RequestMapper: (path=%2)")
+                     .arg(this->method.constData(),
+                          this->path.constData()));
+
+    // set default content-type to plain text
     response.setHeader("Content-Type", "text/plain; charset=UTF-8");
 
-    if (path == "/")
+    if (this->path == "/")
     {
         response.setStatus(200);
-        response.write(QString("It's working :D").toUtf8(), true);
+        response.write(QString::fromUtf8("It's working 👌").toUtf8(), true);
     }
 
-    else if (path.startsWith("/api"))
+    else if (this->path.startsWith("/api"))
     {
-        this->api(request, response, path.mid(4));
+        this->api(path.mid(4));
     }
 
     else
@@ -75,15 +82,62 @@ void RequestMapper::service(HttpRequest &request, HttpResponse &response)
         //staticFileController->service(request, response);
 
         response.setStatus(404);
-        response.write(QString("No handler for URL '%1' found").arg(path.constData()).toUtf8(), true);
+        response.write(QString::fromUtf8("No handler for URL '%1' found").arg(this->path.constData()).toUtf8(), true);
     }
 
-    debugger->notice(QString("[HTTP %1] RequestMapper: finished request for (path=%2)").arg(request.getMethod().constData(), path.constData()));
+    debugger->notice(QString::fromUtf8("[HTTP %1] RequestMapper: finished request for (path=%2)")
+                     .arg(this->method.constData(), this->path.constData()).toUtf8());
+
+    // reset data and pointers
+    this->path.clear();
+    this->method.clear();
+    this->request = nullptr;
+    this->response = nullptr;
 }
 
-void RequestMapper::dbusError(HttpResponse &response)
+void RequestMapper::dbusCall(QDBusInterface *interface, const QString &method)
 {
-    debugger->warning("RequestMapper: Can't connect to the D-Bus Interface.");
-    response.setStatus(503);
-    response.write(QByteArray("Can't connect to the D-Bus Interface."), true);
+    if (interface->isValid())
+    {
+        interface->call(method);
+        this->json(200, true, QString::fromUtf8("D-Bus call to '%1' was successful.").arg(method));
+    }
+
+    else
+    {
+        debugger->warning("RequestMapper: " + this->dbus_error_message);
+        this->json(503, false, this->dbus_error_message);
+    }
+}
+
+void RequestMapper::dbusCallReply(QDBusInterface *interface, const QString &method)
+{
+    if (interface->isValid())
+    {
+        QDBusReply<bool> reply = interface->call(method);
+        this->json(200, reply, QString::fromUtf8("D-Bus call to '%1' was successful.").arg(method));
+    }
+
+    else
+    {
+        debugger->warning("RequestMapper: " + this->dbus_error_message);
+        this->json(503, false, this->dbus_error_message);
+    }
+}
+
+void RequestMapper::json(const quint16 &httpStatus, bool success, const QString &message)
+{
+    QJsonObject obj;
+    obj["status"] = httpStatus;
+    obj["success"] = success;
+    obj["message"] = message;
+    QJsonDocument d(obj);
+    this->response->setStatus(httpStatus);
+    this->response->setHeader("Content-Type", "application/json; charset=UTF-8");
+    this->response->write(d.toJson(QJsonDocument::Compact), true);
+}
+
+void RequestMapper::apiEndpointError()
+{
+    this->json(400, false, QString::fromUtf8("No such endpoint: %1").arg(this->path.constData()));
 }

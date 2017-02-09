@@ -27,6 +27,7 @@
 
 using namespace QtWebApp::HttpServer;
 
+// Note: QtWebApp creates a unique copy in its own thread for each request
 class RequestMapper : public HttpRequestHandler
 {
     Q_OBJECT
@@ -39,10 +40,13 @@ public:
     void service(HttpRequest &request, HttpResponse &response);
 
 private:
-    void api(HttpRequest &request, HttpResponse &response, const QString &endpoint);
-    void apiBot(HttpRequest &request, HttpResponse &response, const QString &endpoint);
+    void api(const QString &endpoint);
+    void apiBot(const QString &endpoint);
 
-    void dbusError(HttpResponse &response);
+    void dbusCall(QDBusInterface *interface, const QString &method);
+    void dbusCallReply(QDBusInterface *interface, const QString &method);
+    void json(const quint16 &httpStatus, bool success, const QString &message);
+    void apiEndpointError();
 
 signals:
     void shutdown();
@@ -52,6 +56,13 @@ private:
     std::unique_ptr<QDBusInterface> m_ifaceMaster;
     std::unique_ptr<QDBusInterface> m_ifaceServer;
     std::unique_ptr<QDBusInterface> m_ifaceBot;
+
+    QByteArray path;
+    QByteArray method;
+    HttpRequest *request;
+    HttpResponse *response;
+
+    static const QString dbus_error_message;
 };
 
 #endif // REQUESTMAPPER_HPP

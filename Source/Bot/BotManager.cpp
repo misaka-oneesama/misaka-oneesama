@@ -193,15 +193,33 @@ void BotManagerDBusAdapter::setOAuthToken(const QString &token)
 
 void BotManagerDBusAdapter::sendMessage(const quint64 &channel, const QString &message)
 {
+    QMutexLocker(&this->m_mutex);
     this->d->discord()->rest()->sendMessage(message, channel);
 }
 
 void BotManagerDBusAdapter::editMessage(const quint64 &channel, const quint64 &messageId, const QString &content)
 {
+    QMutexLocker(&this->m_mutex);
     this->d->discord()->rest()->editMessage(content, channel, messageId);
 }
 
 void BotManagerDBusAdapter::deleteMessage(const quint64 &channel, const quint64 &messageId)
 {
+    QMutexLocker(&this->m_mutex);
     this->d->discord()->rest()->deleteMessage(channel, messageId);
 }
+
+// qDBusRegisterMetaType<QList<quint64>>()
+//void BotManagerDBusAdapter::deleteMessages(const quint64 &channel, const QList<quint64> &messageIds)
+//{
+//    QMutexLocker(&this->m_mutex);
+//
+//    QList<QDiscordID> messages;
+//    for (auto&& i : messageIds)
+//    {
+//        messages << QDiscordID(i);
+//    }
+//
+//    this->d->discord()->rest()->deleteMessages(messages, channel);
+//    messages.clear();
+//}

@@ -9,11 +9,11 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,37 +25,40 @@
 
 #include <iostream>
 
-void RequestMapper::apiBot(HttpRequest &request, HttpResponse &response, const QString &endpoint)
-{
-    Q_UNUSED(request);
-
+void RequestMapper::apiBot(const QString &endpoint)
+{   
     if (endpoint == "/start")
     {
-        if (this->m_ifaceMaster->isValid())
-        {
-            this->m_ifaceMaster->call("startBot");
-            response.setStatus(200);
-            response.write(QByteArray("D-Bus call to 'startBot' was successful."), true);
-        }
-
-        else
-        {
-            this->dbusError(response);
-        }
+        this->dbusCall(this->m_ifaceMaster.get(), "startBot");
     }
 
     else if (endpoint == "/stop")
     {
-        if (this->m_ifaceMaster->isValid())
-        {
-            this->m_ifaceMaster->call("stopBot");
-            response.setStatus(200);
-            response.write(QByteArray("D-Bus call to 'stopBot' was successful."), true);
-        }
+        this->dbusCall(this->m_ifaceMaster.get(), "stopBot");
+    }
 
-        else
-        {
-            this->dbusError(response);
-        }
+    else if (endpoint == "/login")
+    {
+        this->dbusCall(this->m_ifaceBot.get(), "login");
+    }
+
+    else if (endpoint == "/logout")
+    {
+        this->dbusCall(this->m_ifaceBot.get(), "logout");
+    }
+
+    else if (endpoint == "/reload")
+    {
+        this->dbusCall(this->m_ifaceBot.get(), "reload");
+    }
+
+    else if (endpoint == "/isConnected")
+    {
+        this->dbusCallReply(this->m_ifaceBot.get(), "isConnected");
+    }
+
+    else
+    {
+        this->apiEndpointError();
     }
 }
