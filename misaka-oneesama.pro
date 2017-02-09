@@ -8,13 +8,13 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-QT += core network websockets dbus sql
+QT += core concurrent network websockets dbus sql
 QT -= gui
 
 CONFIG += c++14
@@ -26,7 +26,8 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 # Source files
-include(depends.pri)
+include(application.pri)
+include(plugins.pri)
 
 # Disables and refuse to compile all APIs deprecated before Qt 6.0.0 (the future is now ;P)
 DEFINES += QT_DEPRECATED_WARNINGS

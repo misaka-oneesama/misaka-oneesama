@@ -54,6 +54,27 @@ void signal_terminate(int)
     a->quit();
 }
 
+void signal_sigsegv(int)
+{
+    std::cout << "---" << instanceName(instance) << ": bad things happened, saving your life now...." << std::endl;
+    static int max_terminate_tries = 10;
+
+    if (server) server->stop();
+    if (botManager) botManager->stop();
+
+    a->quit();
+
+    max_terminate_tries--;
+    std::cout << "---" << instanceName(instance) << ": failed to terminate normally! Trying again (" << max_terminate_tries << ")/0" << std::endl;
+
+    if (max_terminate_tries == 0)
+    {
+        std::cout << "---" << instanceName(instance) << ": shit's fucked yo. Force killing process!" << std::endl;
+        std::exit(128 + SIGSEGV);
+        std::raise(SIGKILL); // just in case™
+    }
+}
+
 Q_NORETURN void terminate(quint8 exitCode)
 {
     a.reset();
@@ -184,7 +205,7 @@ int main(int argc, char **argv)
     std::signal(SIGINT, signal_terminate);
     std::signal(SIGTERM, signal_terminate);
     std::signal(SIGQUIT, signal_terminate);
-    std::signal(SIGSEGV, signal_terminate);
+    std::signal(SIGSEGV, signal_sigsegv);
     std::signal(SIGILL, signal_terminate);
 
     // Initialize debugger

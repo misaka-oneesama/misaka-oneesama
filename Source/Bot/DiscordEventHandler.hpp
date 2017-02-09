@@ -22,6 +22,9 @@
 
 #include <QDiscord>
 #include <QObject>
+#include <QThreadPool>
+
+#include <Core/PluginInterface.hpp>
 
 class DiscordEventHandler : public QObject
 {
@@ -40,6 +43,8 @@ private slots:
 
 private:
     QDiscord *m_discord = nullptr;
+    QThreadPool m_pool;
+    QList<PluginInterface*> m_plugins;
 };
 
 #endif // DISCORDEVENTHANDLER_HPP

@@ -45,15 +45,18 @@ This are the requirements and dependencies which are required to build and opera
 
  - Linux, \*BSD (FreeBSD), macOS or any other UNIX like system <br>
    <sup>Cygwin on Windows may work too (untested and not recommended)</sup>
+ - Recommended: 64-bit processor <br>
+   Discord IDs are handled as actual *64-bit unsigned integers* internally and not as strings as the API returns them. <br>
+   <sub>If you plan to operate this bot on a 32-bit RPi don't blame me for bad performance :P</sub>
  - UTF-8 compatible system environment and file system (**important!**)
    - This software makes use of UTF-8 characters in both, runtime and file system I/O
  - C++14 compiler
- - The [**D-Bus Message Bus**](https://dbus.freedesktop.org/) <br>
-   <sub>Will be an optimal feature in the future. But **not before** the build system has been changed to CMake!</sub>
+ - The [**D-Bus Message Bus**](https://dbus.freedesktop.org/)
 
  - [Qt](https://www.qt.io) 5.6+ (lower versions may work too, but not recommended)
    - Qt Core
-   - Qt SQL (with `QSQLITE` driver) ─ for the configuration store
+   - Qt Concurrent ─ for asynchronous and non-blocking plugin execution in its own thread ***[experimental]***
+   - Qt SQL (with the `QSQLITE` driver) ─ for the configuration store
    - Qt D-Bus ─ for the Interprocess communication (IPC)
    - Qt Network ─ for the HTTP server which operates the Web UI
    - Qt WebSockets ─ for the Discord API communication
@@ -71,9 +74,9 @@ This are the requirements and dependencies which are required to build and opera
 All Qt supported UNIX like platforms should be supported. Originally this is a personal bot and it needs to work mainly on FreeBSD only, which is the OS of my choice for servers. If there are any issues on other OSes feel free to fix it yourself and make a *pull request* or open an issue and let me know. Also please don't ask for Windows support, thanks. You can try Cygwin or other UNIX compatibility layers on Windows; you are on your own though - I can't assist you with that.
 
 
-## Testing (this notes can become outdated very often during developement)
+## Detailed Description (this notes can become outdated very often during developement)
 
-After running the app it checks if a D-Bus connection can be established. On success it self-spawns itself with different command line arguments to start all the components which again checks for a D-Bus connection and the interface the master process created. The master interface is required for the child processes, if it is not available (example: on direct execution, skipping the master process) the component refuses to start and kills itself. There are 3 processes in total. The first is the master process which glues all components together and must be running. The second is the Server which operates the Web UI. The Web UI can be accessed using [http://127.0.0.1:4555/](http://127.0.0.1:4555/) (default configuration). The server instance handles all HTTP requests and responses and is multithreaded and can handle hundreds of requests in parallel. The third is the actual Discord™ bot which communicates with the WebSocket connection is realtime.
+After running the app it checks if a D-Bus connection can be established. On success it self-spawns itself with different command line arguments to start all the components which again checks for a D-Bus connection and the interface the master process created. The master interface is required for the child processes, if it is not available (example: on direct execution, skipping the master process) the component refuses to start and kills itself. There are 3 processes in total. The first is the master process which glues all components together and must be running. The second is the Server which operates the Web UI. The Web UI can be accessed using [http://127.0.0.1:4555/](http://127.0.0.1:4555/) (default configuration). The server instance handles all HTTP requests and responses and is multithreaded and can handle hundreds of requests in parallel. The third is the actual Discord™ bot which communicates with the WebSocket connection is realtime. The bot instance makes use of Qt Concurrent to execute all events for every plugin in its own thread in a non-blocking way - this is currently highly experimental and can cause hundreds of threads to be spawned (more plugins = more threads).
 
 #### D-Bus
 
@@ -102,11 +105,16 @@ There are several methods already, including but not limited to
 
 There will be many more methods in the future. Most of them will be used programmatically in the future to control and configure most things. This is already the planned and preferred method to configure the bot from the Web UI and API. Some methods will be unused internally, but they offer a great possibility to control the bot from scripts or 3rd party applications via the D-Bus daemon. This is one thing which will make this a very powerful and highly configurable Discord™ bot :)
 
-#### Notes
+#### Plugins
 
-At the moment there isn't anything interesting served over HTTP. Just some string saying `It's working :D` or a 404 error on any other requested path. The API can be found under `/api`. See `Source/Server/RequestMapper.cpp` and `Source/Server/API` for more details about the implemented endpoints. Discord events are processed in real-time and QDiscord supports quite some events already to make a useful bot. I forked this library and I may make some changes to it as I need them.
+The only supported language to write plugins is C++ together with Qt. When everything is more complete I may give language bindings a try. There is no plugin loader for external plugins yet. To make an built-in plugin just inherit the abstract `PluginInterface` class and `override` all methods you need to the plugin. Plugins aren't thread-safe, you must use mutexes where needed.
 
-To see everything in action make sure to run the bot from within a terminal. Quick side note: Even the output is handled by the master process and is protected by a mutex, in rare cases the output still can become very cluttered at some point. I'm investigating why this happens.
+
+#### Developer Notes
+
+At the moment there isn't anything interesting served over HTTP. Just some string saying `It's working 👌` or a 404 error on any other requested path. The API can be found under `/api`. See `Source/Server/RequestMapper.cpp` and `Source/Server/API` for more details about the implemented endpoints. The API returns JSON responses, at the moment those aren't very helpful. Discord events are processed in real-time and QDiscord supports quite some events already to make a useful bot. I forked this library and I may make some changes to it as I need them.
+
+To see everything in action make sure to run the bot from within a terminal. Quick side note: Even when the output is handled by the master process and is protected by a mutex, in rare cases the output still can become very cluttered at some point. I'm investigating why this happens.
 
 Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$HOME/.config/御坂ーお姉さま/logs`).
 
@@ -118,7 +126,7 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
      - [x] Master instance
      - [x] Child instances
    - [x] Refactor `main.cpp`. Toooooo much code redundancy, inefficient and unreadable.
-   - [ ] Refactor and improve `Server` and `BotManager` signals and slots and overall structure.
+   - [x] Refactor and improve `Server` and `BotManager` signals and slots and overall structure.
      - [x] `Server` and `RequestMapper`
      - [ ] `BotManager`
  - [ ] Implement Bot Core
@@ -145,9 +153,11 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
      - [ ] Implement actual Web UI with functionality
  - [ ] Implement Plugin API
    - [ ] Implement config store for plugins, one file per plugin
- - [ ] Implement some plugins
+   - [ ] Implement a plugin loader to make use of external plugins
+ - [ ] Implement some built-in plugins
    - [ ] Chat commands with simple text responses
    - [ ] Server Info, User Info, Role Info, ...
+   - [ ] and much more (all plugins can be completely disabled and will never be copied into memory or affect runtime performance)
 
 <br>
 
@@ -158,4 +168,4 @@ Logs can be found in `$XDG_CONFIG_HOME/御坂ーお姉さま/logs` (fallback `$H
 - **QDiscord** is licensed under the terms and conditions of the `LGPL-3.0`
 - **QtWebApp** is licensed under the terms and conditions of the `LGPL-3.0`
 
-The character 美琴**御坂** (Mikoto Misaka) <sup>[Picture]</sup> is a fictional anime character created by 鎌池和馬 (Kamachi Kazuma). She is a main character in the show とある科学の超電磁砲（レールガン）.
+The character 美琴**御坂** (Mikoto Misaka) <sup>[Picture]</sup> is a fictional anime character created by 鎌池和馬 (Kamachi Kazuma). She is a main character in the anime とある科学の超電磁砲（レールガン）.

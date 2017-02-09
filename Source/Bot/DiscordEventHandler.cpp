@@ -21,6 +21,11 @@
 
 #include <Global.hpp>
 
+#include <QtConcurrent>
+#include <QFuture>
+
+#include <Plugins/TestPlugin/TestPlugin.hpp>
+
 DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QObject *parent)
     : QObject(parent)
 {
@@ -36,32 +41,61 @@ DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QObject *parent)
                      this, &DiscordEventHandler::messageUpdated);
     QObject::connect(this->m_discord->state(), &QDiscordStateComponent::messageDeleted,
                      this, &DiscordEventHandler::messageDeleted);
+
+    // Install built-in plugins
+    this->m_plugins << new TestPlugin(this->m_discord);
 }
 
 DiscordEventHandler::~DiscordEventHandler()
 {
     this->m_discord = nullptr;
+
+    // FIXME: may block forever on bad plugins
+    this->m_pool.waitForDone();
+//    for (PluginInterface *i : this->m_plugins)
+//    {
+//        i->deleteLater();
+//    }
+    this->m_plugins.clear();
 }
 
 void DiscordEventHandler::selfCreated(QSharedPointer<QDiscordUser> user)
 {
     debugger->notice(QString("Bot Account Details: [Username: %1#%2, ID: %3]").arg(
                              user->username(),
-                             QString::number(user->discriminator()),
-                             QString::number(user->id())));
+                             QString::number(user->discriminator().value()),
+                             QString::number(user->id().value())));
+
+    for (auto&& i : this->m_plugins)
+    {
+        QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::selfCreated, user);
+        //i->selfCreated(user);
+    }
 }
 
 void DiscordEventHandler::messageReceived(const QDiscordMessage &message)
 {
-    debugger->notice("DiscordEventHandler: message received -> " + message.content());
+    for (auto&& i : this->m_plugins)
+    {
+        QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageReceived, message);
+        //i->messageReceived(message);
+    }
 }
 
 void DiscordEventHandler::messageUpdated(const QDiscordMessage &message, const QDateTime &timestamp)
 {
-    debugger->notice("DiscordEventHandler: message updated -> " + message.content() + " | @" + timestamp.toString());
+    for (auto&& i : this->m_plugins)
+    {
+        QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageUpdated, message, timestamp);
+        //i->messageUpdated(message, timestamp);
+    }
 }
 
 void DiscordEventHandler::messageDeleted(const QDiscordMessage &message)
 {
-    debugger->notice("DiscordEventHandler: message deleted -> " + QString::number(message.id()));
+    for (auto&& i : this->m_plugins)
+    {
+        QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageDeleted, message);
+        //i->messageDeleted(message);
+    }
 }

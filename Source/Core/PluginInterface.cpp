@@ -1,6 +1,10 @@
 #include "PluginInterface.hpp"
 
-PluginInterface::PluginInterface()
+PluginInterface::PluginInterface(QDiscord *discord)
 {
+    this->d = discord;
+}
 
+PluginInterface::~PluginInterface()
+{
 }
