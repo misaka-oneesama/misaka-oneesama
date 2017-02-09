@@ -17,7 +17,9 @@
 INCLUDEPATH += $$PWD/Plugins
 
 SOURCES += \ 
-    $$PWD/Plugins/TestPlugin/TestPlugin.cpp
+    $$PWD/Plugins/TestPlugin/TestPlugin.cpp \
+    $$PWD/Plugins/CommandProcessor/CommandProcessor.cpp
 
 HEADERS += \ 
-    $$PWD/Plugins/TestPlugin/TestPlugin.hpp
+    $$PWD/Plugins/TestPlugin/TestPlugin.hpp \
+    $$PWD/Plugins/CommandProcessor/CommandProcessor.hpp

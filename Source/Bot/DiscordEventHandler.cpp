@@ -24,12 +24,11 @@
 #include <QtConcurrent>
 #include <QFuture>
 
-#include <Plugins/TestPlugin/TestPlugin.hpp>
-
-DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QObject *parent)
+DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QList<PluginInterface*> *plugins, QObject *parent)
     : QObject(parent)
 {
     this->m_discord = discord;
+    this->m_plugins = plugins;
 
     QObject::connect(this->m_discord->state(), &QDiscordStateComponent::selfCreated,
                      this, &DiscordEventHandler::selfCreated);
@@ -42,21 +41,16 @@ DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QObject *parent)
     QObject::connect(this->m_discord->state(), &QDiscordStateComponent::messageDeleted,
                      this, &DiscordEventHandler::messageDeleted);
 
-    // Install built-in plugins
-    this->m_plugins << new TestPlugin(this->m_discord);
+    this->m_pool.setMaxThreadCount(QThread::idealThreadCount());
 }
 
 DiscordEventHandler::~DiscordEventHandler()
 {
     this->m_discord = nullptr;
+    this->m_plugins = nullptr;
 
     // FIXME: may block forever on bad plugins
     this->m_pool.waitForDone();
-//    for (PluginInterface *i : this->m_plugins)
-//    {
-//        i->deleteLater();
-//    }
-    this->m_plugins.clear();
 }
 
 void DiscordEventHandler::selfCreated(QSharedPointer<QDiscordUser> user)
@@ -66,7 +60,7 @@ void DiscordEventHandler::selfCreated(QSharedPointer<QDiscordUser> user)
                              QString::number(user->discriminator().value()),
                              QString::number(user->id().value())));
 
-    for (auto&& i : this->m_plugins)
+    for (auto&& i : *this->m_plugins)
     {
         QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::selfCreated, user);
         //i->selfCreated(user);
@@ -75,7 +69,7 @@ void DiscordEventHandler::selfCreated(QSharedPointer<QDiscordUser> user)
 
 void DiscordEventHandler::messageReceived(const QDiscordMessage &message)
 {
-    for (auto&& i : this->m_plugins)
+    for (auto&& i : *this->m_plugins)
     {
         QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageReceived, message);
         //i->messageReceived(message);
@@ -84,7 +78,7 @@ void DiscordEventHandler::messageReceived(const QDiscordMessage &message)
 
 void DiscordEventHandler::messageUpdated(const QDiscordMessage &message, const QDateTime &timestamp)
 {
-    for (auto&& i : this->m_plugins)
+    for (auto&& i : *this->m_plugins)
     {
         QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageUpdated, message, timestamp);
         //i->messageUpdated(message, timestamp);
@@ -93,7 +87,7 @@ void DiscordEventHandler::messageUpdated(const QDiscordMessage &message, const Q
 
 void DiscordEventHandler::messageDeleted(const QDiscordMessage &message)
 {
-    for (auto&& i : this->m_plugins)
+    for (auto&& i : *this->m_plugins)
     {
         QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageDeleted, message);
         //i->messageDeleted(message);

@@ -11,10 +11,10 @@ TestPlugin::~TestPlugin()
 {
 }
 
-void TestPlugin::selfCreated(QSharedPointer<QDiscordUser> user)
-{
+//void TestPlugin::selfCreated(QSharedPointer<QDiscordUser> user)
+//{
 
-}
+//}
 
 void TestPlugin::messageReceived(const QDiscordMessage &message)
 {
@@ -23,12 +23,12 @@ void TestPlugin::messageReceived(const QDiscordMessage &message)
     debugger->notice(" <<<<<<<< TestPlugin: WAITED 10 SECONDS");
 }
 
-void TestPlugin::messageUpdated(const QDiscordMessage &message, const QDateTime &timestamp)
-{
+//void TestPlugin::messageUpdated(const QDiscordMessage &message, const QDateTime &timestamp)
+//{
 
-}
+//}
 
-void TestPlugin::messageDeleted(const QDiscordMessage &message)
-{
+//void TestPlugin::messageDeleted(const QDiscordMessage &message)
+//{
 
-}
+//}

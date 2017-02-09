@@ -20,22 +20,50 @@
 #include "BotManager.hpp"
 #include <Global.hpp>
 
+#include <Plugins/TestPlugin/TestPlugin.hpp>
+#include <Plugins/CommandProcessor/CommandProcessor.hpp>
+
 BotManager::BotManager(QObject *parent)
     : QObject(parent)
 {
     this->m_discord.reset(new QDiscord());
-    this->m_eventHandler.reset(new DiscordEventHandler(this->m_discord.get()));
+    this->m_eventHandler.reset(new DiscordEventHandler(this->m_discord.get(), &this->m_plugins));
 
     QObject::connect(this->m_discord.get(), &QDiscord::loginSuccess, this, &BotManager::internal_loginSuccess);
     QObject::connect(this->m_discord.get(), &QDiscord::loginFailed, this, &BotManager::internal_loginFailed);
     QObject::connect(this->m_discord.get(), &QDiscord::loggedOut, this, &BotManager::internal_loggedOut);
     QObject::connect(this->m_discord.get(), &QDiscord::disconnected, this, &BotManager::internal_disconnected);
+
+    // Install meta types for QDiscord
+    qRegisterMetaType<QDiscordID>();
+    qRegisterMetaType<QDiscordDiscriminator>();
+    qRegisterMetaType<QDiscordMessage>();
+
+    // Install built-in plugins
+    this->m_plugins << new TestPlugin(this->m_discord.get());
+
+    CommandProcessor *commandProcessor = new CommandProcessor(this->m_discord.get(), ">");
+    QObject::connect(commandProcessor, &CommandProcessor::sendMessage, this, &BotManager::sendMessage);
+    QObject::connect(commandProcessor, &CommandProcessor::deleteMessage, this, &BotManager::deleteMessage);
+
+    this->m_plugins << commandProcessor;
 }
 
 BotManager::~BotManager()
 {
+    debugger->notice("BotManager: destroying...");
+
+    // schedule plugins for deletion
+    for (PluginInterface *i : this->m_plugins)
+    {
+        i->deleteLater();
+    }
+    this->m_plugins.clear();
+
     this->m_eventHandler.reset();
     this->m_discord.reset();
+
+    debugger->notice("BotManager: destroyed");
 }
 
 void BotManager::setOAuthToken(const QString &token)
@@ -98,6 +126,16 @@ void BotManager::reload()
     this->m_isReloading = true;
     this->m_mutex.unlock();
     this->logout();
+}
+
+void BotManager::sendMessage(const QString &content, const QDiscordID &channel, bool tts)
+{
+    this->m_discord->rest()->sendMessage(content, channel, tts);
+}
+
+void BotManager::deleteMessage(const QDiscordMessage &message)
+{
+    this->m_discord->rest()->deleteMessage(message);
 }
 
 void BotManager::internal_loginSuccess()

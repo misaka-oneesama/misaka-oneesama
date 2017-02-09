@@ -92,15 +92,31 @@ Q_NORETURN void terminate(TerminateReason reason)
     terminate(static_cast<quint8>(reason));
 }
 
+#ifdef MISAKA_RELEASE
+void disable_qdebug(QtMsgType, const QMessageLogContext&, const QString&)
+{
+//    context.file, context.line, context.function
+//    case QtDebugMsg:
+//    case QtInfoMsg:
+//    case QtWarningMsg:
+//    case QtCriticalMsg:
+//    case QtFatalMsg:
+}
+#endif
+
 int main(int argc, char **argv)
 {
     // Close input stream
     std::fclose(stdin);
 
+#ifdef MISAKA_RELEASE
+    qInstallMessageHandler(disable_qdebug);
+#endif
+
     // Initialize QCoreApplication
     a.reset(new QCoreApplication(argc, argv));
     a->setApplicationName(QString::fromUtf8("御坂ーお姉さま"));
-    a->setApplicationVersion(QLatin1String("v0.0.2"));
+    a->setApplicationVersion(QLatin1String("v0.0.3"));
     a->setOrganizationName(QString::fromUtf8("マギルゥーベルベット"));
     a->setOrganizationDomain(QLatin1String("magiruuvelvet.gdn"));
 

@@ -27,6 +27,7 @@
 
 #include <QDiscord>
 #include <Bot/DiscordEventHandler.hpp>
+#include <Core/PluginInterface.hpp>
 
 #include <memory>
 
@@ -56,6 +57,9 @@ public slots:
     void stop();
     void reload();
 
+    void sendMessage(const QString &content, const QDiscordID &channel, bool tts = false);
+    void deleteMessage(const QDiscordMessage &message);
+
 private slots:
     void internal_loginSuccess();
     void internal_loginFailed();
@@ -73,6 +77,7 @@ signals:
 
 private:
     QMutex m_mutex;
+    QList<PluginInterface*> m_plugins;
 
     std::unique_ptr<QDiscord> m_discord;
     std::unique_ptr<DiscordEventHandler> m_eventHandler;

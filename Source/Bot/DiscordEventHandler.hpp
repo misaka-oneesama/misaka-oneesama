@@ -31,7 +31,7 @@ class DiscordEventHandler : public QObject
     Q_OBJECT
 
 public:
-    explicit DiscordEventHandler(QDiscord *discord, QObject *parent = nullptr);
+    explicit DiscordEventHandler(QDiscord *discord, QList<PluginInterface*> *plugins, QObject *parent = nullptr);
     ~DiscordEventHandler();
 
 private slots:
@@ -43,8 +43,8 @@ private slots:
 
 private:
     QDiscord *m_discord = nullptr;
+    QList<PluginInterface*> *m_plugins = nullptr;
     QThreadPool m_pool;
-    QList<PluginInterface*> m_plugins;
 };
 
 #endif // DISCORDEVENTHANDLER_HPP
