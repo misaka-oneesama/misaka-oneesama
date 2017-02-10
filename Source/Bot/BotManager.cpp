@@ -38,6 +38,11 @@ BotManager::BotManager(QObject *parent)
     qRegisterMetaType<QDiscordID>();
     qRegisterMetaType<QDiscordDiscriminator>();
     qRegisterMetaType<QDiscordMessage>();
+    qRegisterMetaType<QDiscordChannel>();
+    qRegisterMetaType<QDiscordGuild>();
+    qRegisterMetaType<QDiscordGame>();
+    qRegisterMetaType<QDiscordMember>();
+    qRegisterMetaType<QDiscordUser>();
 
     // Install built-in plugins
     this->m_plugins << new TestPlugin(this->m_discord.get());
@@ -47,19 +52,21 @@ BotManager::BotManager(QObject *parent)
     QObject::connect(commandProcessor, &CommandProcessor::deleteMessage, this, &BotManager::deleteMessage);
 
     this->m_plugins << commandProcessor;
+
+    // Destroy all plugins on BotManager termination
+    for (PluginInterface *i : this->m_plugins)
+    {
+        QObject::connect(this, &BotManager::stopped, i, &PluginInterface::deleteLater);
+    }
 }
 
 BotManager::~BotManager()
 {
     debugger->notice("BotManager: destroying...");
 
-    // schedule plugins for deletion
-    for (PluginInterface *i : this->m_plugins)
-    {
-        i->deleteLater();
-    }
     this->m_plugins.clear();
 
+    // Waits until all threads have finished their work, see DiscordEventHandler::~DiscordEventHandler()
     this->m_eventHandler.reset();
     this->m_discord.reset();
 
@@ -133,9 +140,24 @@ void BotManager::sendMessage(const QString &content, const QDiscordID &channel, 
     this->m_discord->rest()->sendMessage(content, channel, tts);
 }
 
+void BotManager::editMessage(const QString &newContent, const QDiscordMessage &message)
+{
+    this->m_discord->rest()->editMessage(newContent, message);
+}
+
 void BotManager::deleteMessage(const QDiscordMessage &message)
 {
     this->m_discord->rest()->deleteMessage(message);
+}
+
+void BotManager::deleteMessages(const QList<QDiscordMessage> &messages)
+{
+    this->m_discord->rest()->deleteMessages(messages);
+}
+
+void BotManager::deleteMessages(const QList<QDiscordID> &messages, const QDiscordID &channel)
+{
+    this->m_discord->rest()->deleteMessages(messages, channel);
 }
 
 void BotManager::internal_loginSuccess()

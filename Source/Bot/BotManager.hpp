@@ -58,7 +58,10 @@ public slots:
     void reload();
 
     void sendMessage(const QString &content, const QDiscordID &channel, bool tts = false);
+    void editMessage(const QString &newContent, const QDiscordMessage &message);
     void deleteMessage(const QDiscordMessage &message);
+    void deleteMessages(const QList<QDiscordMessage> &messages);
+    void deleteMessages(const QList<QDiscordID> &messages, const QDiscordID &channel);
 
 private slots:
     void internal_loginSuccess();

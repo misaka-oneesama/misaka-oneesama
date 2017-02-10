@@ -5,6 +5,8 @@
 
 #include <QMutex>
 
+#include "AbstractCommand.hpp"
+
 class CommandProcessor : public PluginInterface
 {
     Q_OBJECT
@@ -20,6 +22,8 @@ public:
     void setCommandCaseSensitivity(const Qt::CaseSensitivity &sensitivity);
     void deleteCommandMessage(bool);
 
+    void installCommand(AbstractCommand *cmd, bool force = false);
+
     void messageReceived(const QDiscordMessage &message);
 
 signals:
@@ -33,6 +37,8 @@ private:
     Qt::CaseSensitivity m_prefix_sensitivity = Qt::CaseSensitive;
     Qt::CaseSensitivity m_cmd_sensitivity = Qt::CaseSensitive;
     bool m_deleteCmdMsg = true;
+
+    QList<AbstractCommand*> m_commands;
 };
 
 #endif // COMMANDPROCESSOR_HPP

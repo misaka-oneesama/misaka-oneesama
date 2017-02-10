@@ -8,18 +8,22 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 INCLUDEPATH += $$PWD/Plugins
 
 SOURCES += \ 
     $$PWD/Plugins/TestPlugin/TestPlugin.cpp \
-    $$PWD/Plugins/CommandProcessor/CommandProcessor.cpp
+    $$PWD/Plugins/CommandProcessor/CommandProcessor.cpp \
+    $$PWD/Plugins/CommandProcessor/AbstractCommand.cpp \
+    $$PWD/Plugins/CommandProcessor/TestCommand.cpp
 
 HEADERS += \ 
     $$PWD/Plugins/TestPlugin/TestPlugin.hpp \
-    $$PWD/Plugins/CommandProcessor/CommandProcessor.hpp
+    $$PWD/Plugins/CommandProcessor/CommandProcessor.hpp \
+    $$PWD/Plugins/CommandProcessor/AbstractCommand.hpp \
+    $$PWD/Plugins/CommandProcessor/TestCommand.hpp

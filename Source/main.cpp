@@ -57,7 +57,7 @@ void signal_terminate(int)
 void signal_sigsegv(int)
 {
     std::cout << "---" << instanceName(instance) << ": bad things happened, saving your life now...." << std::endl;
-    static int max_terminate_tries = 10;
+    static quint16 max_terminate_tries = 10;
 
     if (server) server->stop();
     if (botManager) botManager->stop();
@@ -67,7 +67,7 @@ void signal_sigsegv(int)
     max_terminate_tries--;
     std::cout << "---" << instanceName(instance) << ": failed to terminate normally! Trying again (" << max_terminate_tries << ")/0" << std::endl;
 
-    if (max_terminate_tries == 0)
+    if (max_terminate_tries <= 0)
     {
         std::cout << "---" << instanceName(instance) << ": shit's fucked yo. Force killing process!" << std::endl;
         std::exit(128 + SIGSEGV);

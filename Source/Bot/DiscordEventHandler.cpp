@@ -9,11 +9,11 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -62,8 +62,10 @@ void DiscordEventHandler::selfCreated(QSharedPointer<QDiscordUser> user)
 
     for (auto&& i : *this->m_plugins)
     {
-        QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::selfCreated, user);
-        //i->selfCreated(user);
+        if (i->isEnabled())
+        {
+            QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::selfCreated, user);
+        }
     }
 }
 
@@ -71,8 +73,10 @@ void DiscordEventHandler::messageReceived(const QDiscordMessage &message)
 {
     for (auto&& i : *this->m_plugins)
     {
-        QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageReceived, message);
-        //i->messageReceived(message);
+        if (i->isEnabled())
+        {
+            QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageReceived, message);
+        }
     }
 }
 
@@ -80,8 +84,10 @@ void DiscordEventHandler::messageUpdated(const QDiscordMessage &message, const Q
 {
     for (auto&& i : *this->m_plugins)
     {
-        QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageUpdated, message, timestamp);
-        //i->messageUpdated(message, timestamp);
+        if (i->isEnabled())
+        {
+            QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageUpdated, message, timestamp);
+        }
     }
 }
 
@@ -89,7 +95,9 @@ void DiscordEventHandler::messageDeleted(const QDiscordMessage &message)
 {
     for (auto&& i : *this->m_plugins)
     {
-        QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageDeleted, message);
-        //i->messageDeleted(message);
+        if (i->isEnabled())
+        {
+            QFuture<void> future = QtConcurrent::run(&this->m_pool, i, &PluginInterface::messageDeleted, message);
+        }
     }
 }
