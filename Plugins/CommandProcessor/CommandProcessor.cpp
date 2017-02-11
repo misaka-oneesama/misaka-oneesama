@@ -69,6 +69,7 @@ void CommandProcessor::installCommand(AbstractCommand *cmd, bool force)
         return;
     }
 
+    QMutexLocker(&this->m_mutex);
     debugger->notice(
         QString::fromUtf8("CommandProcessor: Command '%1' attached.")
         .arg(cmd->name())
@@ -80,8 +81,9 @@ void CommandProcessor::messageReceived(const QDiscordMessage &message)
 {
     if (message.content().startsWith(this->m_prefix, this->m_prefix_sensitivity))
     {
-        QString command = message.content().mid(this->m_prefix.size(), message.content().indexOf(' '));
-        QString arguments = message.content().mid(command.size() + 1);
+        QString command = message.content().mid(this->m_prefix.size());
+        command = command.left(command.indexOf(' '));
+        QString arguments = message.content().mid(this->m_prefix.size() + command.size() + 1);
 
         for (AbstractCommand *i : this->m_commands)
         {

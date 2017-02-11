@@ -23,7 +23,7 @@ QString TestCommand::exec(const QString &arguments, const QDiscordMessage &messa
                    "**`Guild Name:`** %5\n"
                    "**`Channel:`** %6\n"
                    "**`Guild ID (from Channel):` `%7`")
-                   .arg(arguments,
+                   .arg(arguments.isEmpty() ? "(no arguments given)" : arguments,
                         message.channelId().toString(),
                         message.id().toString(),
                         message.guild().isNull() ? "nullptr, but why :thinking:" : message.guild()->id().toString(),
