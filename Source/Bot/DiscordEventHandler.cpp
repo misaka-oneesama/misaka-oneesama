@@ -41,7 +41,7 @@ DiscordEventHandler::DiscordEventHandler(QDiscord *discord, QList<PluginInterfac
     QObject::connect(this->m_discord->state(), &QDiscordStateComponent::messageDeleted,
                      this, &DiscordEventHandler::messageDeleted);
 
-    this->m_pool.setMaxThreadCount(QThread::idealThreadCount());
+    this->m_pool.setMaxThreadCount(QThread::idealThreadCount() * 3);
 }
 
 DiscordEventHandler::~DiscordEventHandler()
@@ -49,8 +49,8 @@ DiscordEventHandler::~DiscordEventHandler()
     this->m_discord = nullptr;
     this->m_plugins = nullptr;
 
-    // FIXME: may block forever on bad plugins
-    this->m_pool.waitForDone();
+    debugger->notice("DiscordEventHandler: waiting for all threads to complete...");
+    this->m_pool.waitForDone(10000); // 10 seconds timeout
 }
 
 void DiscordEventHandler::selfCreated(QSharedPointer<QDiscordUser> user)
