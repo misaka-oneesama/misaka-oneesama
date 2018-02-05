@@ -8,7 +8,7 @@ Discord Bot with Web UI, HTTP API, D-Bus Integration and Plugin support written 
 [![Discord Server](https://discordapp.com/api/guilds/277765099807047681/embed.png)](https://discord.gg/BvyFy5k)
 <br><br>
 
-**FreeBSD** [![FreeBSD Build Status](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/badge/icon)](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/job/misaka-oneesama/job/master/lastBuild/console) | **Linux** [![Linux Build Status](https://travis-ci.org/misaka-oneesama/misaka-oneesama.svg?branch=master)](https://travis-ci.org/misaka-oneesama/misaka-oneesama)
+**FreeBSD** [![FreeBSD Build Status](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/badge/icon)](https://jenkins.magiruuvelvet.gdn/job/misaka-oneesama/lastBuild/console) | **Linux** [![Linux Build Status](https://travis-ci.org/misaka-oneesama/misaka-oneesama.svg?branch=master)](https://travis-ci.org/misaka-oneesama/misaka-oneesama)
 
 
 ## Overview
